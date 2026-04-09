@@ -1968,7 +1968,7 @@ async function restoreData(event) {
         // Re-insert
         if(data.owners?.length) await sb.from('owners').insert(data.owners.map(o=>({id:o.id,user_id:uid_val,name:o.name,role:o.role||'',share:o.share||0,phone:o.phone||''})));
         if(data.goats?.length) await sb.from('goats').insert(data.goats.map(g=>({id:g.id,user_id:uid_val,name:g.name,gender:g.gender||'male',acquisition:g.acquisition||'purchased',price:g.price||0,date:g.date||null,breed:g.breed||'',notes:g.notes||'',status:g.status||'active'})));
-        if(data.expenses?.length) await sb.from('expenses').insert(data.expenses.map(e=>({id:e.id,user_id:uid_val,amount:e.amount,date:e.date,category:e.category,method:e.method||'',note:e.note||'',type:e.type||'all',goat_ids:e.goatIds||[],goat_id:e.goatId||null,paid_by:e.paidBy||''})));
+        if(data.expenses?.length) await sb.from('expenses').insert(data.expenses.map(e=>({id:e.id,user_id:uid_val,amount:e.amount,date:e.date,category:e.category,method:e.method||'',note:e.note||'',type:e.type||'all',goat_ids:e.goatIds||[],goat_id:e.goatId||null,paid_by:e.paidBy||[]})));
         if(data.sales?.length) await sb.from('sales').insert(data.sales.map(s=>({id:s.id,user_id:uid_val,goat_id:s.goatId||null,goat_name:s.goatName||'',price:s.price,date:s.date,buyer:s.buyer||''})));
         if(data.notes?.length) await sb.from('notes').insert(data.notes.map(n=>({id:n.id,user_id:uid_val,content:n.content,type:n.type||'general',goat_id:n.goatId||null})));
         if(data.ledger?.length) await sb.from('ledger').insert(data.ledger.map(l=>({id:l.id,user_id:uid_val,type:l.type,owner_id:l.ownerId||null,amount:l.amount,date:l.date||null,note:l.note||''})));
