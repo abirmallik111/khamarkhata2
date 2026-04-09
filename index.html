@@ -1,0 +1,2589 @@
+<!DOCTYPE html>
+<html lang="bn" class="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Khamar Khata - আধুনিক খামার ব্যবস্থাপনা</title>
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "primary": "#206223","primary-container": "#3a7b3a","on-primary": "#ffffff","on-primary-container": "#cbffc2",
+        "secondary": "#7a5649","secondary-container": "#fdcdbc","on-secondary": "#ffffff","on-secondary-container": "#795548",
+        "tertiary": "#884200","tertiary-container": "#ad5600","on-tertiary": "#ffffff","on-tertiary-container": "#ffeee6",
+        "error": "#ba1a1a","error-container": "#ffdad6","on-error": "#ffffff","on-error-container": "#93000a",
+        "surface": "#f9f9f9","surface-bright": "#f9f9f9","surface-dim": "#dadada",
+        "surface-container-lowest": "#ffffff","surface-container-low": "#f3f3f3",
+        "surface-container": "#eeeeee","surface-container-high": "#e8e8e8","surface-container-highest": "#e2e2e2",
+        "on-surface": "#1a1c1c","on-surface-variant": "#40493d",
+        "outline": "#707a6c","outline-variant": "#bfcaba",
+        "inverse-surface": "#2f3131","inverse-on-surface": "#f1f1f1","inverse-primary": "#91d78a",
+        "background": "#f9f9f9","on-background": "#1a1c1c",
+        "primary-fixed": "#acf4a4","primary-fixed-dim": "#91d78a",
+        "surface-tint": "#2a6b2c",
+      },
+      borderRadius: { "DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","2xl":"0.75rem","full":"9999px" },
+      fontFamily: { "headline":["Manrope","sans-serif"],"body":["Inter","sans-serif"] }
+    }
+  }
+}
+</script>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Inter',sans-serif;background:#f3f3f3;color:#1a1c1c;overflow-x:hidden}
+h1,h2,h3,h4,h5,.headline{font-family:'Manrope',sans-serif}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;vertical-align:middle}
+.view{display:none}.view.active{display:block}
+
+/* ===== MODALS ===== */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);z-index:200;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:1.25rem 1.25rem 0 0;padding:1.5rem;width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 -8px 40px rgba(26,28,28,0.18)}
+@media(min-width:640px){
+  .modal-overlay{align-items:center}
+  .modal{border-radius:1.25rem;max-width:520px;padding:2rem}
+}
+
+/* ===== BUTTONS ===== */
+.btn-primary{background:linear-gradient(135deg,#206223,#3a7b3a);color:#fff;border:none;border-radius:9999px;padding:0.8rem 1.5rem;font-family:'Manrope',sans-serif;font-weight:700;cursor:pointer;transition:transform 0.1s,opacity 0.1s;display:inline-flex;align-items:center;justify-content:center;gap:0.4rem;font-size:0.9rem}
+.btn-primary:hover{opacity:0.92}.btn-primary:active{transform:scale(0.97)}
+.btn-secondary{background:#fdcdbc;color:#795548;border:none;border-radius:9999px;padding:0.8rem 1.5rem;font-family:'Manrope',sans-serif;font-weight:700;cursor:pointer;transition:all 0.1s;display:inline-flex;align-items:center;gap:0.4rem;font-size:0.9rem}
+.btn-secondary:hover{opacity:0.85}
+.btn-ghost{background:transparent;color:#206223;border:none;border-radius:9999px;padding:0.75rem 1.25rem;font-family:'Manrope',sans-serif;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:0.4rem}
+.btn-danger{background:#ffdad6;color:#93000a;border:none;border-radius:9999px;padding:0.4rem 0.9rem;font-family:'Manrope',sans-serif;font-weight:600;cursor:pointer;font-size:0.78rem}
+
+/* ===== INPUTS ===== */
+.input-field{width:100%;background:#e8e8e8;border:none;border-radius:0.5rem;padding:0.8rem 1rem;font-size:0.9rem;font-family:'Inter',sans-serif;color:#1a1c1c;outline:none;border-bottom:2px solid transparent;transition:border-color 0.2s;-webkit-appearance:none}
+.input-field:focus{border-bottom:2px solid #206223;background:#eeeeee}
+.label{display:block;font-size:0.72rem;font-weight:700;color:#40493d;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.4rem}
+select.input-field{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%2340493d' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 1rem center}
+
+/* ===== CARDS ===== */
+.card{background:#fff;border-radius:0.875rem;padding:1.25rem;box-shadow:0 2px 12px rgba(26,28,28,0.06)}
+.stat-card{background:#fff;border-radius:0.875rem;padding:1.25rem;box-shadow:0 2px 12px rgba(26,28,28,0.06)}
+
+/* ===== BADGES ===== */
+.badge{display:inline-flex;align-items:center;padding:0.2rem 0.7rem;border-radius:9999px;font-size:0.72rem;font-weight:700}
+.badge-active{background:#acf4a4;color:#002203}
+.badge-sold{background:#fdcdbc;color:#795548}
+.badge-dead{background:#e2e2e2;color:#40493d}
+.badge-pending{background:#ffdad6;color:#93000a}
+.badge-cleared{background:#acf4a4;color:#002203}
+
+/* ===== TABLE ROWS ===== */
+.table-row{display:grid;padding:0.875rem 1rem;border-radius:0.5rem;align-items:center;transition:background 0.1s;cursor:pointer}
+.table-row:hover{background:#f3f3f3}
+/* Mobile card for goat rows */
+.goat-card-row{background:#fff;border-radius:0.875rem;padding:1rem 1.1rem;display:flex;align-items:center;gap:0.875rem;box-shadow:0 2px 8px rgba(26,28,28,0.06);cursor:pointer;transition:box-shadow 0.15s;margin-bottom:0.6rem}
+.goat-card-row:active{box-shadow:0 1px 4px rgba(26,28,28,0.08)}
+
+/* ===== PROFIT COLORS ===== */
+.profit-positive{color:#206223;font-weight:700}
+.profit-negative{color:#ba1a1a;font-weight:700}
+
+/* ===== CHECKBOX / RADIO GROUPS ===== */
+.checkbox-group label{display:flex;align-items:center;gap:0.5rem;cursor:pointer;padding:0.6rem 0.75rem;border-radius:0.5rem;border:2px solid #eeeeee;font-size:0.875rem;transition:all 0.15s}
+.checkbox-group input[type=checkbox]:checked + span{color:#206223}
+.checkbox-group label:has(input:checked){border-color:#206223;background:#f0fdf0}
+.radio-group label{display:flex;align-items:center;gap:0.5rem;cursor:pointer;padding:0.6rem 0.875rem;border-radius:0.5rem;border:2px solid #eeeeee;font-size:0.875rem;transition:all 0.15s;font-family:'Manrope',sans-serif;font-weight:600}
+.radio-group label:has(input:checked){border-color:#206223;background:#f0fdf0;color:#206223}
+
+/* ===== TOAST ===== */
+.toast{position:fixed;bottom:5.5rem;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1c1c;color:#fff;padding:0.7rem 1.5rem;border-radius:9999px;font-weight:600;font-size:0.875rem;z-index:999;opacity:0;transition:all 0.3s;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(min-width:768px){.toast{bottom:2rem;left:auto;right:2rem;transform:translateY(20px)}.toast.show{transform:translateY(0)}}
+
+/* ===== NAV LINK ===== */
+.nav-link{display:flex;align-items:center;gap:1rem;padding:0.75rem 1rem;border-radius:0.5rem;color:#40493d;font-family:'Manrope',sans-serif;font-weight:600;transition:all 0.15s;cursor:pointer}
+.nav-link:hover{background:#e8e8e8;color:#206223}
+.nav-link.active{background:#e8e8e8;color:#206223;border-right:3px solid #206223}
+/* ===== SIDEBAR (DESKTOP) ===== */
+.sidebar{width:240px;min-width:240px;background:#f3f3f3;height:100vh;position:fixed;left:0;top:0;display:flex;flex-direction:column;padding:1.5rem 1rem;z-index:50;border-right:1px solid #eeeeee;transition:transform 0.3s ease}
+.main-content{margin-left:240px;min-height:100vh;padding:1.5rem 2rem;padding-bottom:2rem}
+
+/* ===== MOBILE OVERRIDES ===== */
+@media(max-width:767px){
+  .sidebar{transform:translateX(-100%);width:280px;z-index:150;box-shadow:4px 0 24px rgba(0,0,0,0.12)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:140}
+  .sidebar-backdrop.open{display:block}
+  .main-content{margin-left:0;padding:0.75rem;padding-bottom:5.5rem}
+  .mobile-header{display:flex}
+  .desktop-header{display:none}
+  .bottom-nav{display:flex}
+  .hide-mobile{display:none!important}
+
+  /* Responsive grids */
+  .grid-responsive-2{grid-template-columns:1fr!important}
+  .grid-responsive-3{grid-template-columns:1fr!important}
+  .grid-responsive-4{grid-template-columns:1fr 1fr!important}
+
+  /* Make table-row become cards on mobile for goat list */
+  #goat-list .table-row{grid-template-columns:1fr auto!important;gap:0.5rem}
+  #goat-list .table-row > span:not(:first-child):not(:last-child){display:none}
+
+  /* Expense list: simpler on mobile */
+  #expense-list .table-row{grid-template-columns:1fr auto!important}
+  #expense-list .table-row > span{display:none}
+
+  /* Sale list */
+  #sale-list .table-row{grid-template-columns:1fr auto!important}
+  #sale-list .table-row > span:not(:first-child):not(:last-child){display:none}
+
+  /* Contribution list */
+  #contribution-list .table-row{grid-template-columns:1fr auto!important}
+  #contribution-list .table-row > span:nth-child(3){display:none}
+
+  /* Report tables */
+  #goat-profit-list .table-row{grid-template-columns:1fr auto!important}
+  #goat-profit-list .table-row > span:not(:first-child):not(:last-child){display:none}
+
+  /* Card padding smaller on mobile */
+  .card{padding:1rem}
+  .stat-card{padding:1rem}
+
+  /* Column headers hide on mobile */
+  .col-header{display:none!important}
+}
+
+@media(min-width:768px){
+  .mobile-header{display:none!important}
+  .desktop-header{display:flex}
+  .bottom-nav{display:none!important}
+  .sidebar-backdrop{display:none!important}
+}
+
+/* ===== MOBILE HEADER ===== */
+.mobile-header{background:linear-gradient(135deg,#206223,#3a7b3a);padding:0.875rem 1rem;align-items:center;gap:0.75rem;position:sticky;top:0;z-index:60}
+.mobile-header-title{color:#fff;font-family:'Manrope',sans-serif;font-weight:800;font-size:1.05rem;flex:1;text-align:center}
+.mobile-header-btn{background:rgba(255,255,255,0.15);border:none;border-radius:0.5rem;padding:0.4rem;cursor:pointer;display:flex;align-items:center;color:#fff}
+
+/* ===== BOTTOM NAV ===== */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #eeeeee;z-index:130;padding:0.25rem 0;padding-bottom:env(safe-area-inset-bottom,0.25rem);box-shadow:0 -2px 12px rgba(26,28,28,0.08)}
+.bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:0.1rem;padding:0.4rem 0.25rem;cursor:pointer;border:none;background:transparent;color:#707a6c;font-size:0.62rem;font-family:'Inter',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;transition:color 0.15s}
+.bottom-nav-item.active{color:#206223}
+.bottom-nav-item .material-symbols-outlined{font-size:22px}
+
+/* ===== MOBILE GOAT CARD ===== */
+.goat-list-mobile{display:none}
+.goat-list-desktop{display:block}
+@media(max-width:767px){
+  .goat-list-mobile{display:flex;flex-direction:column;gap:0.6rem}
+  .goat-list-desktop{display:none}
+}
+
+/* ===== AUTH SCREEN ===== */
+#auth-screen{display:flex;position:fixed;inset:0;z-index:999;background:linear-gradient(160deg,#f0fdf4 0%,#dcfce7 50%,#f3f3f3 100%);align-items:center;justify-content:center;padding:1rem}
+#auth-screen.hidden{display:none}
+.auth-card{background:#fff;border-radius:1.5rem;padding:2.25rem 2rem;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(32,98,35,.12)}
+.auth-tab{flex:1;padding:.6rem;background:transparent;border:none;border-radius:9999px;font-family:'Manrope',sans-serif;font-weight:700;font-size:.875rem;cursor:pointer;color:#707a6c;transition:.15s}
+.auth-tab.active{background:linear-gradient(135deg,#206223,#3a7b3a);color:#fff}
+#app-screen.hidden{display:none}
+
+@media print{.sidebar,.modal-overlay,header,.no-print,.mobile-header,.bottom-nav{display:none!important}.main-content{margin-left:0!important;padding:0!important}}
+
+/* ===== ANIMATIONS ===== */
+.animate-in{animation:slideIn 0.2s ease-out}
+@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN / REGISTER SCREEN ===== -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div style="text-align:center;margin-bottom:1.5rem;">
+      <div style="width:56px;height:56px;background:linear-gradient(135deg,#206223,#3a7b3a);border-radius:1rem;display:flex;align-items:center;justify-content:center;margin:0 auto .75rem;">
+        <span class="material-symbols-outlined" style="color:#fff;font-size:28px;">agriculture</span>
+      </div>
+      <h1 style="font-family:'Manrope',sans-serif;font-weight:900;font-size:1.5rem;color:#1a4d1c;margin:0;">Khamar Khata</h1>
+      <p style="font-size:.75rem;color:#707a6c;text-transform:uppercase;letter-spacing:.08em;margin-top:.25rem;">Modern Field Journal</p>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;background:#f3f3f3;border-radius:9999px;padding:.2rem;margin-bottom:1.5rem;">
+      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Login</button>
+      <button class="auth-tab" id="tab-register" onclick="switchTab('register')">Register</button>
+    </div>
+
+    <!-- Login Form -->
+    <div id="form-login">
+      <div style="margin-bottom:.875rem;">
+        <label class="label">Email</label>
+        <input type="email" id="login-email" class="input-field" placeholder="your@email.com"/>
+      </div>
+      <div style="margin-bottom:1.25rem;">
+        <label class="label">Password</label>
+        <input type="password" id="login-password" class="input-field" placeholder="••••••••"/>
+      </div>
+      <div id="auth-error" style="display:none;background:#ffdad6;color:#93000a;padding:.6rem 1rem;border-radius:.5rem;font-size:.8rem;margin-bottom:.875rem;"></div>
+      <button class="btn-primary" style="width:100%;justify-content:center;" onclick="handleLogin()" id="btn-login">
+        <span class="material-symbols-outlined" style="font-size:18px;">login</span> Login
+      </button>
+      <p style="text-align:center;font-size:.8rem;color:#707a6c;margin-top:1rem;">নতুন account নেই? <button onclick="switchTab('register')" style="background:none;border:none;color:#206223;font-weight:700;cursor:pointer;">Register করুন</button></p>
+    </div>
+
+    <!-- Register Form -->
+    <div id="form-register" style="display:none;">
+      <div style="margin-bottom:.875rem;">
+        <label class="label">Full Name</label>
+        <input type="text" id="reg-name" class="input-field" placeholder="আপনার নাম"/>
+      </div>
+      <div style="margin-bottom:.875rem;">
+        <label class="label">Email</label>
+        <input type="email" id="reg-email" class="input-field" placeholder="your@email.com"/>
+      </div>
+      <div style="margin-bottom:.875rem;">
+        <label class="label">Password</label>
+        <input type="password" id="reg-password" class="input-field" placeholder="Min. 6 characters"/>
+      </div>
+      <div style="margin-bottom:1.25rem;">
+        <label class="label">Farm Name</label>
+        <input type="text" id="reg-farm" class="input-field" placeholder="আপনার খামারের নাম"/>
+      </div>
+      <div id="auth-error-reg" style="display:none;background:#ffdad6;color:#93000a;padding:.6rem 1rem;border-radius:.5rem;font-size:.8rem;margin-bottom:.875rem;"></div>
+      <button class="btn-primary" style="width:100%;justify-content:center;" onclick="handleRegister()" id="btn-register">
+        <span class="material-symbols-outlined" style="font-size:18px;">person_add</span> Create Account
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MAIN APP (hidden until logged in) ===== -->
+<div id="app-screen" class="hidden">
+
+<!-- SIDEBAR BACKDROP (mobile) -->
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="flex items-center gap-3 px-2 mb-6">
+    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0" style="background:linear-gradient(135deg,#206223,#3a7b3a)">
+      <span class="material-symbols-outlined text-xl">agriculture</span>
+    </div>
+    <div>
+      <h1 class="text-base font-black text-green-900 headline leading-tight">Khamar Khata</h1>
+      <p class="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Modern Field Journal</p>
+    </div>
+    <button onclick="closeSidebar()" class="ml-auto md:hidden" style="background:none;border:none;cursor:pointer;color:#707a6c">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+  <nav class="flex-1 space-y-1 overflow-y-auto">
+    <div class="nav-link active" onclick="navigate('dashboard')">
+      <span class="material-symbols-outlined text-xl">dashboard</span><span>Dashboard</span>
+    </div>
+    <div class="nav-link" onclick="navigate('goats')">
+      <span class="material-symbols-outlined text-xl">pets</span><span>Goats</span>
+    </div>
+    <div class="nav-link" onclick="navigate('expenses')">
+      <span class="material-symbols-outlined text-xl">payments</span><span>Expenses</span>
+    </div>
+    <div class="nav-link" onclick="navigate('owners')">
+      <span class="material-symbols-outlined text-xl">group</span><span>Owners</span>
+    </div>
+    <div class="nav-link" onclick="navigate('sales')">
+      <span class="material-symbols-outlined text-xl">trending_up</span><span>Sales</span>
+    </div>
+    <div class="nav-link" onclick="navigate('reports')">
+      <span class="material-symbols-outlined text-xl">assessment</span><span>Reports</span>
+    </div>
+    <div class="nav-link" onclick="navigate('notes')">
+      <span class="material-symbols-outlined text-xl">sticky_note_2</span><span>Notes</span>
+    </div>
+    <div class="nav-link" onclick="navigate('settings')">
+      <span class="material-symbols-outlined text-xl">settings</span><span>Settings</span>
+    </div>
+  </nav>
+  <div class="mt-4">
+    <button class="btn-primary w-full justify-center text-sm" onclick="openModal('modal-add-goat');closeSidebar()">
+      <span class="material-symbols-outlined text-lg">add_circle</span> Quick Add Goat
+    </button>
+  </div>
+  <div class="mt-4 space-y-1">
+    <div class="nav-link" onclick="backupData();closeSidebar()">
+      <span class="material-symbols-outlined text-xl">download</span><span>Backup</span>
+    </div>
+    <div class="nav-link" onclick="triggerRestore();closeSidebar()">
+      <span class="material-symbols-outlined text-xl">upload</span><span>Restore</span>
+    </div>
+    <input type="file" id="restore-input" accept=".json" style="display:none" onchange="restoreData(event)"/>
+  </div>
+  <!-- User info + logout -->
+  <div style="margin-top:auto;padding-top:.75rem;border-top:1px solid #eeeeee;">
+    <div style="display:flex;align-items:center;gap:.625rem;padding:.5rem .75rem;border-radius:.5rem;background:#e8e8e8;">
+      <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#206223,#3a7b3a);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span class="material-symbols-outlined" style="color:#fff;font-size:16px;">person</span>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <p style="font-size:.75rem;font-weight:700;color:#1a1c1c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="sidebar-user-email">Loading...</p>
+        <p style="font-size:.65rem;color:#707a6c;" id="sidebar-farm-name">Khamar Khata</p>
+      </div>
+      <button onclick="handleLogout()" style="background:none;border:none;cursor:pointer;color:#ba1a1a;" title="Logout">
+        <span class="material-symbols-outlined" style="font-size:18px;">logout</span>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- MOBILE HEADER -->
+<header class="mobile-header" id="mobile-header">
+  <button class="mobile-header-btn" onclick="openSidebar()">
+    <span class="material-symbols-outlined">menu</span>
+  </button>
+  <span class="mobile-header-title" id="mobile-page-title">Dashboard</span>
+  <button class="mobile-header-btn" onclick="openModal('modal-add-goat')">
+    <span class="material-symbols-outlined">add</span>
+  </button>
+</header>
+
+<!-- BOTTOM NAV (mobile) -->
+<nav class="bottom-nav" id="bottom-nav">
+  <button class="bottom-nav-item active" id="bn-dashboard" onclick="navigate('dashboard')">
+    <span class="material-symbols-outlined">dashboard</span>
+    <span>Home</span>
+  </button>
+  <button class="bottom-nav-item" id="bn-goats" onclick="navigate('goats')">
+    <span class="material-symbols-outlined">pets</span>
+    <span>Goats</span>
+  </button>
+  <button class="bottom-nav-item" id="bn-expenses" onclick="navigate('expenses')">
+    <span class="material-symbols-outlined">payments</span>
+    <span>Expenses</span>
+  </button>
+  <button class="bottom-nav-item" id="bn-owners" onclick="navigate('owners')">
+    <span class="material-symbols-outlined">group</span>
+    <span>Owners</span>
+  </button>
+  <button class="bottom-nav-item" id="bn-sales" onclick="navigate('sales')">
+    <span class="material-symbols-outlined">trending_up</span>
+    <span>Sales</span>
+  </button>
+</nav>
+
+<main class="main-content">
+  <header class="desktop-header flex justify-between items-center mb-6 no-print">
+    <div>
+      <h2 class="text-2xl font-black headline text-green-900" id="page-title">Dashboard</h2>
+      <p class="text-sm text-gray-500" id="page-subtitle">খামারের সামগ্রিক চিত্র</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="bg-white rounded-full px-4 py-2 flex items-center gap-2 shadow-sm">
+        <span class="material-symbols-outlined text-gray-400 text-lg">search</span>
+        <input id="global-search" type="text" placeholder="Search..." class="outline-none bg-transparent text-sm w-40" oninput="handleSearch(this.value)"/>
+      </div>
+      <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white cursor-pointer" title="খামারের তারিখ">
+        <span class="material-symbols-outlined text-lg">calendar_today</span>
+      </div>
+    </div>
+  </header>
+
+  <div id="view-dashboard" class="view active animate-in">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+      <div class="stat-card" style="background:linear-gradient(135deg,#206223,#3a7b3a);color:#fff">
+        <p class="text-xs font-bold uppercase tracking-wider opacity-80">নিট মুনাফা / NET PROFIT</p>
+        <h3 class="text-3xl font-black headline mt-1" id="dash-profit">৳ 0</h3>
+        <p class="text-xs mt-2 opacity-70" id="dash-profit-note">মোট বিক্রয় - মোট খরচ</p>
+      </div>
+      <div class="stat-card">
+        <p class="text-xs font-bold uppercase tracking-wider text-gray-500">মোট ব্যয় / TOTAL EXPENSES</p>
+        <h3 class="text-3xl font-black headline mt-1 text-on-surface" id="dash-expenses">৳ 0</h3>
+        <p class="text-xs mt-2 text-gray-400" id="dash-expense-count">0 transactions</p>
+      </div>
+      <div class="stat-card">
+        <p class="text-xs font-bold uppercase tracking-wider text-gray-500">মোট বিক্রয় / TOTAL SALES</p>
+        <h3 class="text-3xl font-black headline mt-1 text-on-surface" id="dash-sales">৳ 0</h3>
+        <p class="text-xs mt-2 text-gray-400" id="dash-sales-count">0 goats sold</p>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+      <div class="stat-card" style="background:#fdcdbc">
+        <p class="text-xs font-bold uppercase tracking-wider" style="color:#795548">ছাগলের সংখ্যা / GOAT COUNT</p>
+        <h3 class="text-3xl font-black headline mt-1" style="color:#795548" id="dash-goat-count">0</h3>
+        <p class="text-xs mt-2 flex items-center gap-1" style="color:#795548"><span class="material-symbols-outlined text-sm">pets</span><span id="dash-active-goats">0 active</span></p>
+      </div>
+      <div class="stat-card col-span-1 md:col-span-3">
+        <div class="flex justify-between items-center mb-3">
+          <h4 class="font-bold headline text-sm">মাসিক ব্যয়ের ট্রেন্ড</h4>
+          <span class="text-xs text-gray-400">Last 6 Months</span>
+        </div>
+        <div class="relative h-24 flex items-end gap-1" id="expense-chart"></div>
+        <div class="flex justify-between mt-2 text-[10px] font-bold text-gray-400 uppercase" id="chart-labels"></div>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="lg:col-span-2 card">
+        <h4 class="font-bold headline mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">history</span> সাম্প্রতিক কর্মকাণ্ড
+        </h4>
+        <div id="recent-activities" class="space-y-1">
+          <p class="text-sm text-gray-400 text-center py-8">কোনো কার্যক্রম নেই</p>
+        </div>
+      </div>
+      <div class="space-y-3">
+        <div class="card" style="background:linear-gradient(135deg,#206223,#3a7b3a);color:#fff">
+          <h4 class="font-black headline text-base mb-2">🐐 Eid Preparation</h4>
+          <p class="text-sm opacity-80 mb-3">আপনার পশুর প্রস্তুতি পরীক্ষা করুন এবং সঠিক পুষ্টি নিশ্চিত করুন।</p>
+          <button class="btn-primary text-xs" style="background:rgba(255,255,255,0.2)" onclick="navigate('goats')">View Herd →</button>
+        </div>
+        <div class="card">
+          <h5 class="font-bold text-sm text-gray-500 mb-3 flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">phone</span> Farm Support
+          </h5>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-primary flex-shrink-0">
+              <span class="material-symbols-outlined">call</span>
+            </div>
+            <div>
+              <p class="text-xs text-gray-400">Livestock Helpline</p>
+              <p class="text-xl font-black headline">16123</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== GOATS VIEW ==================== -->
+  <div id="view-goats" class="view animate-in">
+    <div class="flex justify-between items-center mb-4 no-print">
+      <div class="flex gap-2">
+        <select class="input-field w-auto text-sm" id="goat-filter-status" onchange="renderGoats()">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="sold">Sold</option>
+          <option value="dead">Dead</option>
+        </select>
+        <select class="input-field w-auto text-sm" id="goat-filter-gender" onchange="renderGoats()">
+          <option value="">All Gender</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+        </select>
+      </div>
+      <button class="btn-primary text-sm hide-mobile" onclick="openModal('modal-add-goat')">
+        <span class="material-symbols-outlined text-lg">add</span> Add New Goat
+      </button>
+    </div>
+    <!-- Goat Stats Row -->
+    <div class="grid grid-cols-3 gap-3 mb-4">
+      <div class="stat-card text-center">
+        <p class="text-xs text-gray-400 uppercase font-bold">Active</p>
+        <h3 class="text-2xl font-black headline text-primary" id="goat-stat-active">0</h3>
+      </div>
+      <div class="stat-card text-center">
+        <p class="text-xs text-gray-400 uppercase font-bold">Sold</p>
+        <h3 class="text-2xl font-black headline" style="color:#795548" id="goat-stat-sold">0</h3>
+      </div>
+      <div class="stat-card text-center">
+        <p class="text-xs text-gray-400 uppercase font-bold">Dead</p>
+        <h3 class="text-2xl font-black headline text-gray-500" id="goat-stat-dead">0</h3>
+      </div>
+    </div>
+
+    <!-- Mobile Goat Card List -->
+    <div class="goat-list-mobile" id="goat-list-mobile">
+      <p class="text-center text-gray-400 py-10 text-sm">কোনো ছাগল নেই</p>
+    </div>
+
+    <!-- Desktop Goat Table -->
+    <div class="card goat-list-desktop">
+      <div class="col-header grid text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-5" style="grid-template-columns:1fr 80px 100px 110px 80px 110px">
+        <span>ID / Name</span><span>Gender</span><span>Purchase</span><span>Date</span><span>Status</span><span>Actions</span>
+      </div>
+      <div id="goat-list" class="space-y-1">
+        <p class="text-center text-gray-400 py-10 text-sm">কোনো ছাগল যোগ করা হয়নি</p>
+      </div>
+    </div>
+
+    <!-- Mobile Add Button (fixed bottom area) -->
+    <div class="md:hidden" style="height:1rem"></div>
+    <div class="md:hidden fixed bottom-16 right-4 z-50">
+      <button class="btn-primary" style="width:52px;height:52px;border-radius:50%;padding:0;justify-content:center;box-shadow:0 4px 20px rgba(32,98,35,.35)" onclick="openModal('modal-add-goat')">
+        <span class="material-symbols-outlined" style="font-size:22px">add</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== GOAT PROFILE VIEW ==================== -->
+  <div id="view-goat-profile" class="view animate-in">
+    <button class="btn-ghost mb-4 no-print" onclick="navigate('goats')">← Back to Herd</button>
+    <div id="goat-profile-content"></div>
+  </div>
+
+  <!-- ==================== EXPENSES VIEW ==================== -->
+  <div id="view-expenses" class="view animate-in">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <!-- Form -->
+      <div class="lg:col-span-2">
+        <div class="card mb-4">
+          <h3 class="font-black headline text-lg mb-1">Record New Expense</h3>
+          <p class="text-sm text-gray-400 mb-4">দৈনিক খরচ লগ করুন</p>
+
+          <label class="label">Expense Type</label>
+          <div class="radio-group flex gap-2 flex-wrap mb-4" id="expense-type-group">
+            <label><input type="radio" name="exp-type" value="all" checked onchange="onExpTypeChange()"/><span>🌍 All Goats</span></label>
+            <label><input type="radio" name="exp-type" value="selected" onchange="onExpTypeChange()"/><span>☑️ Selected</span></label>
+            <label><input type="radio" name="exp-type" value="single" onchange="onExpTypeChange()"/><span>🐐 Single</span></label>
+          </div>
+
+          <div id="selected-goats-section" style="display:none" class="mb-4">
+            <label class="label">Select Goats</label>
+            <div id="goat-checkbox-list" class="checkbox-group grid grid-cols-2 gap-2 max-h-40 overflow-y-auto"></div>
+          </div>
+          <div id="single-goat-section" style="display:none" class="mb-4">
+            <label class="label">Select Goat</label>
+            <select class="input-field" id="exp-single-goat"><option value="">-- Select --</option></select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 mb-3">
+            <div><label class="label">Amount (৳)</label><input type="number" class="input-field" id="exp-amount" placeholder="0.00" min="0"/></div>
+            <div><label class="label">Date</label><input type="date" class="input-field" id="exp-date"/></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <label class="label">Category</label>
+              <select class="input-field" id="exp-category">
+                <option value="feed">Feed / খাবার</option>
+                <option value="medicine">Medicine / ওষুধ</option>
+                <option value="salary">Salary / বেতন</option>
+                <option value="transport">Transport</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div><label class="label">Payment Method</label><input type="text" class="input-field" id="exp-method" placeholder="e.g. Cash, bKash"/></div>
+          </div>
+          <div class="mb-3">
+            <label class="label">Paid By (Owners)</label>
+            <div id="owner-checkbox-list" class="checkbox-group flex flex-wrap gap-2"></div>
+          </div>
+          <div class="mb-4">
+            <label class="label">Note</label>
+            <textarea class="input-field" id="exp-note" rows="2" placeholder="Additional details..."></textarea>
+          </div>
+          <button class="btn-primary w-full justify-center" onclick="saveExpense()">
+            <span class="material-symbols-outlined">save</span> Save Expense
+          </button>
+        </div>
+
+        <!-- Recent Expenses List -->
+        <div class="card">
+          <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+            <h4 class="font-bold headline">Recent Expenses</h4>
+            <div class="flex gap-2">
+              <input type="date" class="input-field text-xs" style="width:130px;padding:0.4rem 0.5rem" id="exp-filter-from" onchange="renderExpenses()"/>
+              <input type="date" class="input-field text-xs" style="width:130px;padding:0.4rem 0.5rem" id="exp-filter-to" onchange="renderExpenses()"/>
+            </div>
+          </div>
+          <div class="col-header grid text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-4" style="grid-template-columns:1fr 90px 80px 90px">
+            <span>Category & Details</span><span>Date</span><span>Paid By</span><span class="text-right">Amount</span>
+          </div>
+          <div id="expense-list" class="space-y-1">
+            <p class="text-center text-gray-400 py-8 text-sm">কোনো খরচ নেই</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Sidebar -->
+      <div class="space-y-3">
+        <div class="card">
+          <p class="text-xs font-bold text-gray-400 uppercase mb-1">This Month</p>
+          <h3 class="text-2xl font-black headline text-primary" id="exp-this-month">৳ 0</h3>
+          <div class="w-full h-1.5 bg-gray-100 rounded-full mt-3"><div class="h-full bg-primary rounded-full" id="exp-month-bar" style="width:0%"></div></div>
+        </div>
+        <div class="card">
+          <p class="text-xs font-bold text-gray-400 uppercase mb-3">Category Breakdown</p>
+          <div id="category-breakdown" class="space-y-2"></div>
+        </div>
+        <div class="card" style="background:#fef9e7">
+          <div class="flex gap-2 mb-2"><span class="material-symbols-outlined text-yellow-500">lightbulb</span><h5 class="font-bold text-sm">Smart Allocation</h5></div>
+          <p class="text-sm text-gray-600">"Selected Goats" বেছে নিলে খরচ automatically সেই goat গুলোর মধ্যে ভাগ হবে।</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== OWNERS VIEW ==================== -->
+  <div id="view-owners" class="view animate-in">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="lg:col-span-2">
+        <div class="mb-4">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="font-bold headline text-lg">Current Ownership</h3>
+            <button class="btn-primary text-sm" onclick="openModal('modal-add-owner')">
+              <span class="material-symbols-outlined text-lg">add</span> Add Owner
+            </button>
+          </div>
+          <div id="owner-cards" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+        </div>
+        <div class="card">
+          <h4 class="font-bold headline mb-3 flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">account_balance</span> Contribution Tracking
+          </h4>
+          <div class="col-header grid text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-4" style="grid-template-columns:1fr 100px 100px 90px 80px">
+            <span>Partner</span><span>Total Paid</span><span>Required</span><span>Status</span><span>Action</span>
+          </div>
+          <div id="contribution-list" class="space-y-2">
+            <p class="text-center text-gray-400 py-6 text-sm">কোনো মালিক নেই</p>
+          </div>
+        </div>
+      </div>
+      <div class="space-y-3">
+        <div class="card" style="background:linear-gradient(135deg,#206223,#3a7b3a);color:#fff">
+          <p class="text-xs font-bold uppercase opacity-70 mb-1">Total Farm Capital</p>
+          <h3 class="text-2xl font-black headline" id="farm-capital">৳ 0</h3>
+          <p class="text-xs mt-2 opacity-60">মোট বিনিয়োগ</p>
+        </div>
+        <div class="card">
+          <h4 class="font-bold headline mb-3 flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">swap_horiz</span> Balance Ledger
+          </h4>
+          <div id="balance-ledger"><p class="text-sm text-gray-400">হিসাব করা হচ্ছে...</p></div>
+        </div>
+        <div class="card">
+          <h4 class="font-bold headline mb-3">Record Payment</h4>
+          <p class="text-sm text-gray-500 mb-3">মালিকদের মধ্যে fund transfer রেকর্ড করুন</p>
+          <div class="space-y-3">
+            <div><label class="label">From Owner</label><select class="input-field" id="ledger-from"><option value="">-- Select --</option></select></div>
+            <div><label class="label">To Owner</label><select class="input-field" id="ledger-to"><option value="">-- Select --</option></select></div>
+            <div><label class="label">Amount (৳)</label><input type="number" class="input-field" id="ledger-amount" placeholder="0"/></div>
+            <div><label class="label">Note</label><input type="text" class="input-field" id="ledger-note" placeholder="Settlement note..."/></div>
+          </div>
+          <button class="btn-primary w-full mt-3 justify-center" onclick="recordPayment()">
+            <span class="material-symbols-outlined">add</span> Add Ledger Entry
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SALES VIEW ==================== -->
+  <div id="view-sales" class="view animate-in">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="lg:col-span-2">
+        <div class="card mb-4">
+          <h3 class="font-black headline text-lg mb-1">Record Sale</h3>
+          <p class="text-sm text-gray-400 mb-4">ছাগল বিক্রির তথ্য যোগ করুন</p>
+          <div class="mb-3">
+            <label class="label">Select Goat</label>
+            <select class="input-field" id="sale-goat"><option value="">-- Active Goat Select করুন --</option></select>
+          </div>
+          <div class="grid grid-cols-2 gap-3 mb-3">
+            <div><label class="label">Sell Price (৳)</label><input type="number" class="input-field" id="sale-price" placeholder="0.00" min="0" oninput="updateSalePreview()"/></div>
+            <div><label class="label">Sale Date</label><input type="date" class="input-field" id="sale-date"/></div>
+          </div>
+          <div class="mb-3">
+            <label class="label">Buyer Name (Optional)</label>
+            <input type="text" class="input-field" id="sale-buyer" placeholder="ক্রেতার নাম"/>
+          </div>
+          <div id="sale-preview" class="bg-green-50 rounded-xl p-3 mb-4" style="display:none">
+            <h5 class="font-bold headline text-sm mb-2 text-primary">Auto Calculation Preview</h5>
+            <div class="grid grid-cols-3 gap-2 text-sm">
+              <div><p class="text-gray-400 text-xs">Total Cost</p><p class="font-bold" id="prev-cost">৳ 0</p></div>
+              <div><p class="text-gray-400 text-xs">Sell Price</p><p class="font-bold" id="prev-sell">৳ 0</p></div>
+              <div><p class="text-gray-400 text-xs">Profit/Loss</p><p class="font-black" id="prev-profit">৳ 0</p></div>
+            </div>
+          </div>
+          <button class="btn-primary w-full justify-center" onclick="saveSale()">
+            <span class="material-symbols-outlined">point_of_sale</span> Record Sale
+          </button>
+        </div>
+        <div class="card">
+          <h4 class="font-bold headline mb-3">Sale History</h4>
+          <div class="col-header grid text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-4" style="grid-template-columns:1fr 90px 100px 100px 90px">
+            <span>Goat</span><span>Date</span><span>Buyer</span><span>Sell Price</span><span class="text-right">Profit/Loss</span>
+          </div>
+          <div id="sale-list" class="space-y-1">
+            <p class="text-center text-gray-400 py-8 text-sm">কোনো বিক্রি নেই</p>
+          </div>
+        </div>
+      </div>
+      <div class="space-y-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#206223,#3a7b3a);color:#fff">
+          <p class="text-xs font-bold uppercase opacity-70">Total Revenue</p>
+          <h3 class="text-2xl font-black headline mt-1" id="sales-total-rev">৳ 0</h3>
+        </div>
+        <div class="stat-card">
+          <p class="text-xs font-bold uppercase text-gray-400">Net Profit</p>
+          <h3 class="text-2xl font-black headline mt-1 profit-positive" id="sales-net-profit">৳ 0</h3>
+        </div>
+        <div class="stat-card">
+          <p class="text-xs font-bold uppercase text-gray-400">Goats Sold</p>
+          <h3 class="text-2xl font-black headline mt-1" id="sales-count">0</h3>
+        </div>
+        <div class="card">
+          <h5 class="font-bold headline mb-3">Top Profitable</h5>
+          <div id="top-profitable" class="space-y-2"><p class="text-sm text-gray-400">No sales yet</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== REPORTS VIEW ==================== -->
+  <div id="view-reports" class="view animate-in">
+    <div class="flex flex-wrap gap-3 mb-4 no-print">
+      <div class="flex-1 min-w-0"><label class="label">From Date</label><input type="date" class="input-field" id="report-from" onchange="renderReports()"/></div>
+      <div class="flex-1 min-w-0"><label class="label">To Date</label><input type="date" class="input-field" id="report-to" onchange="renderReports()"/></div>
+      <div class="flex items-end">
+        <button class="btn-primary text-sm" onclick="printReport()">
+          <span class="material-symbols-outlined">picture_as_pdf</span> PDF
+        </button>
+      </div>
+    </div>
+    <div id="report-content">
+      <div class="grid grid-cols-3 gap-3 mb-4">
+        <div class="stat-card text-center"><p class="text-xs text-gray-400 uppercase font-bold">Expenses</p><h3 class="text-xl font-black headline text-primary mt-1" id="rep-expenses">৳ 0</h3></div>
+        <div class="stat-card text-center"><p class="text-xs text-gray-400 uppercase font-bold">Sales</p><h3 class="text-xl font-black headline mt-1" id="rep-sales">৳ 0</h3></div>
+        <div class="stat-card text-center"><p class="text-xs text-gray-400 uppercase font-bold">Profit</p><h3 class="text-xl font-black headline mt-1" id="rep-profit">৳ 0</h3></div>
+      </div>
+      <div class="card mb-4 overflow-x-auto">
+        <h4 class="font-bold headline mb-3">Goat-wise Profit / Loss</h4>
+        <div class="col-header grid text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-4" style="grid-template-columns:80px 1fr 110px 110px 110px 100px;min-width:600px">
+          <span>ID</span><span>Name</span><span>Total Cost</span><span>Sell Price</span><span>Profit/Loss</span><span>Status</span>
+        </div>
+        <div id="goat-profit-list" class="space-y-1"></div>
+      </div>
+      <div class="card mb-4">
+        <h4 class="font-bold headline mb-3">Expense by Category</h4>
+        <div id="report-category-breakdown" class="space-y-2"></div>
+      </div>
+      <div class="card">
+        <h4 class="font-bold headline mb-3">Owner Contribution Report</h4>
+        <div id="report-owner-contribution" class="space-y-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== NOTES VIEW ==================== -->
+  <div id="view-notes" class="view animate-in">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="lg:col-span-2">
+        <div class="card mb-4">
+          <h3 class="font-black headline text-lg mb-3">Add Note</h3>
+          <div class="mb-3">
+            <label class="label">Note Type</label>
+            <div class="radio-group flex gap-2 mb-3">
+              <label><input type="radio" name="note-type" value="general" checked onchange="toggleNoteGoat()"/><span>📝 General</span></label>
+              <label><input type="radio" name="note-type" value="goat" onchange="toggleNoteGoat()"/><span>🐐 Goat Specific</span></label>
+            </div>
+          </div>
+          <div id="note-goat-section" style="display:none" class="mb-3">
+            <label class="label">Select Goat</label>
+            <select class="input-field" id="note-goat-select"><option value="">-- Select Goat --</option></select>
+          </div>
+          <div class="mb-3">
+            <label class="label">Note</label>
+            <textarea class="input-field" id="note-content" rows="4" placeholder="লিখুন..."></textarea>
+          </div>
+          <button class="btn-primary w-full justify-center" onclick="saveNote()">
+            <span class="material-symbols-outlined">save</span> Save Note
+          </button>
+        </div>
+        <div class="card">
+          <h4 class="font-bold headline mb-3">All Notes</h4>
+          <div class="flex gap-2 mb-3 flex-wrap">
+            <button class="btn-secondary text-xs" onclick="filterNotes('all')">All</button>
+            <button class="btn-ghost text-xs border" onclick="filterNotes('general')">General</button>
+            <button class="btn-ghost text-xs border" onclick="filterNotes('goat')">Goat-specific</button>
+          </div>
+          <div id="notes-list" class="space-y-3">
+            <p class="text-center text-gray-400 py-8 text-sm">কোনো নোট নেই</p>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h5 class="font-bold headline mb-3">Quick Stats</h5>
+          <div class="space-y-3">
+            <div class="flex justify-between"><span class="text-sm text-gray-500">General Notes</span><span class="font-bold" id="note-general-count">0</span></div>
+            <div class="flex justify-between"><span class="text-sm text-gray-500">Goat Notes</span><span class="font-bold" id="note-goat-count">0</span></div>
+            <div class="flex justify-between"><span class="text-sm text-gray-500">Total Notes</span><span class="font-bold" id="note-total-count">0</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SETTINGS VIEW ==================== -->
+  <div id="view-settings" class="view animate-in">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="card">
+        <h3 class="font-black headline text-lg mb-3">Expense Categories</h3>
+        <div class="flex gap-2 mb-3">
+          <input type="text" class="input-field flex-1" id="new-category-input" placeholder="New category name"/>
+          <button class="btn-primary text-sm" onclick="addCategory()">Add</button>
+        </div>
+        <div id="category-list" class="space-y-2"></div>
+      </div>
+      <div class="card">
+        <h3 class="font-black headline text-lg mb-3">Owner Management</h3>
+        <div id="settings-owner-list" class="space-y-3 mb-4"></div>
+        <button class="btn-secondary text-sm" onclick="openModal('modal-add-owner')">
+          <span class="material-symbols-outlined text-lg">add</span> Add New Owner
+        </button>
+      </div>
+      <div class="card">
+        <h3 class="font-black headline text-lg mb-3">Backup & Restore</h3>
+        <p class="text-sm text-gray-500 mb-4">সব data ডাউনলোড করুন এবং পরে restore করুন।</p>
+        <div class="flex flex-wrap gap-3">
+          <button class="btn-primary text-sm" onclick="backupData()">
+            <span class="material-symbols-outlined">download</span> Download Backup
+          </button>
+          <button class="btn-secondary text-sm" onclick="triggerRestore()">
+            <span class="material-symbols-outlined">upload</span> Restore Backup
+          </button>
+        </div>
+      </div>
+      <div class="card" style="border:2px solid #ffdad6">
+        <h3 class="font-black headline text-lg mb-2 text-red-700">Danger Zone</h3>
+        <p class="text-sm text-gray-500 mb-4">সব data মুছে ফেলুন। এটা undo করা যাবে না।</p>
+        <button class="btn-danger" onclick="clearAllData()">🗑️ Clear All Data</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ==================== MODALS ==================== -->
+
+<!-- Add Goat Modal -->
+<div class="modal-overlay" id="modal-add-goat">
+  <div class="modal">
+    <div class="flex justify-between items-start mb-6">
+      <div>
+        <h3 class="font-black headline text-xl">New Herd Entry</h3>
+        <p class="text-xs text-gray-400 uppercase tracking-wider">Registry Details</p>
+      </div>
+      <button onclick="closeModal('modal-add-goat')" class="text-gray-400 hover:text-gray-700">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="space-y-4">
+      <div><label class="label">Goat ID / Name</label><input type="text" class="input-field" id="goat-id" placeholder="e.g. #GT-1234 or Snow White"/></div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="label">Gender</label>
+          <select class="input-field" id="goat-gender">
+            <option value="male">Male / পুরুষ</option>
+            <option value="female">Female / মহিলা</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">Acquisition Type</label>
+          <select class="input-field" id="goat-acquisition">
+            <option value="purchased">Purchased</option>
+            <option value="born">Born on Farm</option>
+            <option value="gifted">Gifted</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="label">Purchase Price (৳)</label><input type="number" class="input-field" id="goat-price" placeholder="0.00" min="0"/></div>
+        <div><label class="label">Entry Date</label><input type="date" class="input-field" id="goat-date"/></div>
+      </div>
+      <div>
+        <label class="label">Breed (Optional)</label>
+        <input type="text" class="input-field" id="goat-breed" placeholder="e.g. Jamunapari, Black Bengal"/>
+      </div>
+      <div>
+        <label class="label">Notes</label>
+        <textarea class="input-field" id="goat-notes" rows="2" placeholder="Any initial notes..."></textarea>
+      </div>
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button class="btn-ghost flex-1" onclick="closeModal('modal-add-goat')">Cancel</button>
+      <button class="btn-primary flex-1 justify-center" onclick="saveGoat()">
+        <span class="material-symbols-outlined">check</span> Complete Registry
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Owner Modal -->
+<div class="modal-overlay" id="modal-add-owner">
+  <div class="modal">
+    <div class="flex justify-between items-start mb-6">
+      <div>
+        <h3 class="font-black headline text-xl">Add New Owner</h3>
+        <p class="text-xs text-gray-400 uppercase tracking-wider">Equity Partner Details</p>
+      </div>
+      <button onclick="closeModal('modal-add-owner')" class="text-gray-400 hover:text-gray-700">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="space-y-4">
+      <div><label class="label">Owner Name</label><input type="text" class="input-field" id="owner-name" placeholder="Full name"/></div>
+      <div><label class="label">Role / Title</label><input type="text" class="input-field" id="owner-role" placeholder="e.g. Lead Investor, Operational Lead"/></div>
+      <div><label class="label">Share Percentage (%)</label><input type="number" class="input-field" id="owner-share" placeholder="e.g. 50" min="0" max="100"/></div>
+      <div><label class="label">Phone (Optional)</label><input type="text" class="input-field" id="owner-phone" placeholder="01XXXXXXXXX"/></div>
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button class="btn-ghost flex-1" onclick="closeModal('modal-add-owner')">Cancel</button>
+      <button class="btn-primary flex-1 justify-center" onclick="saveOwner()">
+        <span class="material-symbols-outlined">check</span> Add Owner
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Owner Modal -->
+<div class="modal-overlay" id="modal-edit-owner">
+  <div class="modal">
+    <div class="flex justify-between items-start mb-6">
+      <h3 class="font-black headline text-xl">Edit Owner</h3>
+      <button onclick="closeModal('modal-edit-owner')" class="text-gray-400 hover:text-gray-700"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <input type="hidden" id="edit-owner-id"/>
+    <div class="space-y-4">
+      <div><label class="label">Owner Name</label><input type="text" class="input-field" id="edit-owner-name"/></div>
+      <div><label class="label">Role / Title</label><input type="text" class="input-field" id="edit-owner-role"/></div>
+      <div><label class="label">Share (%)</label><input type="number" class="input-field" id="edit-owner-share" min="0" max="100"/></div>
+      <div><label class="label">Phone</label><input type="text" class="input-field" id="edit-owner-phone"/></div>
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button class="btn-ghost flex-1" onclick="closeModal('modal-edit-owner')">Cancel</button>
+      <button class="btn-primary flex-1 justify-center" onclick="updateOwner()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Goat Modal -->
+<div class="modal-overlay" id="modal-edit-goat">
+  <div class="modal">
+    <div class="flex justify-between items-start mb-6">
+      <h3 class="font-black headline text-xl">Edit Goat</h3>
+      <button onclick="closeModal('modal-edit-goat')" class="text-gray-400 hover:text-gray-700"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <input type="hidden" id="edit-goat-id"/>
+    <div class="space-y-4">
+      <div><label class="label">ID / Name</label><input type="text" class="input-field" id="edit-goat-name"/></div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="label">Gender</label><select class="input-field" id="edit-goat-gender"><option value="male">Male</option><option value="female">Female</option></select></div>
+        <div><label class="label">Status</label><select class="input-field" id="edit-goat-status"><option value="active">Active</option><option value="sold">Sold</option><option value="dead">Dead</option></select></div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="label">Purchase Price (৳)</label><input type="number" class="input-field" id="edit-goat-price"/></div>
+        <div><label class="label">Breed</label><input type="text" class="input-field" id="edit-goat-breed"/></div>
+      </div>
+      <div><label class="label">Notes</label><textarea class="input-field" id="edit-goat-notes" rows="2"></textarea></div>
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button class="btn-ghost flex-1" onclick="closeModal('modal-edit-goat')">Cancel</button>
+      <button class="btn-primary flex-1 justify-center" onclick="updateGoat()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// DATA LAYER
+// ============================================================
+const DB = {
+  get(key) { try { return JSON.parse(localStorage.getItem('kk_' + key)) || []; } catch { return []; } },
+  set(key, val) { localStorage.setItem('kk_' + key, JSON.stringify(val)); },
+  getObj(key, def={}) { try { return JSON.parse(localStorage.getItem('kk_' + key)) || def; } catch { return def; } },
+  setObj(key, val) { localStorage.setItem('kk_' + key, JSON.stringify(val)); }
+};
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function fmt(n) { return '৳ ' + Number(n || 0).toLocaleString('en-IN'); }
+function today() { return new Date().toISOString().split('T')[0]; }
+
+// Seeds demo data if empty
+function seedIfEmpty() {
+  if (!DB.get('goats').length && !DB.get('owners').length) {
+    const owners = [
+      {id:uid(), name:'Rahim Ahmed', role:'Lead Investor', share:50, phone:'01711000001'},
+      {id:uid(), name:'Karim Ullah', role:'Operational Lead', share:50, phone:'01711000002'}
+    ];
+    DB.set('owners', owners);
+    const cats = ['feed','medicine','salary','transport','other'];
+    DB.set('categories', cats);
+  }
+  if (!DB.get('categories').length) DB.set('categories', ['feed','medicine','salary','transport','other']);
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+const VIEWS = ['dashboard','goats','goat-profile','expenses','owners','sales','reports','notes','settings'];
+const PAGE_TITLES = {
+  dashboard:['Dashboard','খামারের সামগ্রিক চিত্র'],
+  goats:['Herd Inventory','ছাগলের তালিকা'],
+  'goat-profile':['Goat Profile','বিস্তারিত তথ্য'],
+  expenses:['Expenses','খরচের হিসাব'],
+  owners:['Share Management','মালিকানা ব্যবস্থাপনা'],
+  sales:['Sales','বিক্রয় লেজার'],
+  reports:['Reports','প্রতিবেদন'],
+  notes:['Notes','নোটসমূহ'],
+  settings:['Settings','সেটিংস']
+};
+
+function navigate(view) {
+  VIEWS.forEach(v => {
+    const el = document.getElementById('view-' + v);
+    if (el) el.classList.toggle('active', v === view);
+  });
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  const match = [...document.querySelectorAll('.nav-link')].find(l => l.getAttribute('onclick')?.includes(`'${view}'`));
+  if (match) match.classList.add('active');
+  const [title, sub] = PAGE_TITLES[view] || [view, ''];
+  document.getElementById('page-title').textContent = title;
+  document.getElementById('page-subtitle').textContent = sub;
+  // Mobile: sync bottom nav
+  ['dashboard','goats','expenses','owners','sales'].forEach(v => {
+    const btn = document.getElementById('bn-'+v);
+    if (btn) btn.classList.toggle('active', v === view);
+  });
+  // Mobile: sync header title
+  const mTitle = document.getElementById('mobile-page-title');
+  if (mTitle) mTitle.textContent = title;
+  // Close sidebar on mobile navigation
+  document.getElementById('sidebar')?.classList.remove('open');
+  document.getElementById('sidebar-backdrop')?.classList.remove('open');
+  document.body.style.overflow = '';
+  refreshView(view);
+  window.scrollTo(0, 0);
+}
+
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebar-backdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-backdrop').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function refreshView(view) {
+  if (view === 'dashboard') renderDashboard();
+  if (view === 'goats') renderGoats();
+  if (view === 'expenses') renderExpenses(), renderOwnerCheckboxes(), renderExpenseSummary();
+  if (view === 'owners') renderOwners();
+  if (view === 'sales') renderSales(), renderSaleGoatDropdown();
+  if (view === 'reports') renderReports();
+  if (view === 'notes') renderNotes(), renderNoteGoatDropdown();
+  if (view === 'settings') renderSettings();
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if (id === 'modal-add-goat') { document.getElementById('goat-date').value = today(); }
+  if (id === 'modal-add-owner') {}
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ============================================================
+// TOAST
+// ============================================================
+function toast(msg, dur = 2500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), dur);
+}
+
+// ============================================================
+// GOAT MANAGEMENT
+// ============================================================
+function saveGoat() {
+  const name = document.getElementById('goat-id').value.trim();
+  if (!name) { toast('❌ Goat ID/Name দিন'); return; }
+  const goat = {
+    id: uid(),
+    name,
+    gender: document.getElementById('goat-gender').value,
+    acquisition: document.getElementById('goat-acquisition').value,
+    price: parseFloat(document.getElementById('goat-price').value) || 0,
+    date: document.getElementById('goat-date').value || today(),
+    breed: document.getElementById('goat-breed').value.trim(),
+    notes: document.getElementById('goat-notes').value.trim(),
+    status: 'active',
+    createdAt: Date.now()
+  };
+  const goats = DB.get('goats');
+  goats.push(goat);
+  DB.set('goats', goats);
+  addActivity('goat_added', `New goat added: ${goat.name}`, goat.price, 'debit');
+  closeModal('modal-add-goat');
+  ['goat-id','goat-price','goat-breed','goat-notes'].forEach(id => document.getElementById(id).value = '');
+  toast('✅ Goat added successfully!');
+  if (document.getElementById('view-goats').classList.contains('active')) renderGoats();
+}
+
+function renderGoats() {
+  const goats = DB.get('goats');
+  const statusFilter = document.getElementById('goat-filter-status')?.value || '';
+  const genderFilter = document.getElementById('goat-filter-gender')?.value || '';
+  const filtered = goats.filter(g =>
+    (!statusFilter || g.status === statusFilter) &&
+    (!genderFilter || g.gender === genderFilter)
+  );
+
+  const active = goats.filter(g => g.status === 'active').length;
+  const sold = goats.filter(g => g.status === 'sold').length;
+  const dead = goats.filter(g => g.status === 'dead').length;
+  document.getElementById('goat-stat-active').textContent = active;
+  document.getElementById('goat-stat-sold').textContent = sold;
+  document.getElementById('goat-stat-dead').textContent = dead;
+
+  const list = document.getElementById('goat-list');
+  if (!filtered.length) {
+    list.innerHTML = '<p class="text-center text-gray-400 py-10 text-sm">কোনো ছাগল নেই</p>';
+    return;
+  }
+  list.innerHTML = filtered.map(g => `
+    <div class="table-row cursor-pointer" style="grid-template-columns:1fr 80px 100px 110px 80px 110px" onclick="viewGoatProfile('${g.id}')">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style="background:${g.gender==='male'?'#e8f5e9':'#fce4ec'};color:${g.gender==='male'?'#206223':'#880e4f'}">
+          ${g.gender==='male'?'♂':'♀'}
+        </div>
+        <div>
+          <p class="font-bold text-sm">${g.name}</p>
+          ${g.breed ? `<p class="text-xs text-gray-400">${g.breed}</p>` : ''}
+        </div>
+      </div>
+      <span class="text-sm capitalize">${g.gender}</span>
+      <span class="text-sm font-bold">${fmt(g.price)}</span>
+      <span class="text-sm text-gray-500">${g.date || '-'}</span>
+      <span><span class="badge badge-${g.status}">${g.status.charAt(0).toUpperCase()+g.status.slice(1)}</span></span>
+      <div class="flex gap-2" onclick="event.stopPropagation()">
+        <button class="btn-secondary text-xs px-3 py-1" onclick="openEditGoat('${g.id}')">Edit</button>
+        <button class="btn-danger" onclick="deleteGoat('${g.id}')">Del</button>
+      </div>
+    </div>
+  `).join('');
+
+  // Mobile card list
+  const mobileList = document.getElementById('goat-list-mobile');
+  if (mobileList) {
+    if (!filtered.length) {
+      mobileList.innerHTML = '<p class="text-center text-gray-400 py-10 text-sm">কোনো ছাগল নেই</p>';
+    } else {
+      mobileList.innerHTML = filtered.map(g => `
+        <div class="goat-card-row" onclick="viewGoatProfile('${g.id}')">
+          <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style="background:${g.gender==='male'?'#e8f5e9':'#fce4ec'}">
+            ${g.gender==='male'?'🐐':'🐑'}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <p class="font-bold text-sm">${g.name}</p>
+              <span class="badge badge-${g.status}">${g.status.charAt(0).toUpperCase()+g.status.slice(1)}</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-0.5">${g.gender.charAt(0).toUpperCase()+g.gender.slice(1)}${g.breed?' · '+g.breed:''} · ${g.date||''}</p>
+            <p class="text-xs font-bold text-primary mt-0.5">${fmt(g.price)}</p>
+          </div>
+          <div class="flex gap-1 flex-shrink-0" onclick="event.stopPropagation()">
+            <button class="btn-secondary text-xs px-2 py-1" onclick="openEditGoat('${g.id}')">Edit</button>
+            <button class="btn-danger" onclick="deleteGoat('${g.id}')">Del</button>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+}
+
+function viewGoatProfile(id) {
+  const goat = DB.get('goats').find(g => g.id === id);
+  if (!goat) return;
+  const expenses = DB.get('expenses').filter(e =>
+    e.type === 'all' || (e.type === 'selected' && e.goatIds?.includes(id)) || (e.type === 'single' && e.goatId === id)
+  );
+  const allGoatCount = DB.get('goats').filter(g => g.status !== 'dead').length;
+  let totalAllocated = 0;
+  expenses.forEach(e => {
+    if (e.type === 'all') totalAllocated += (e.amount / (allGoatCount || 1));
+    else if (e.type === 'selected') totalAllocated += (e.amount / (e.goatIds?.length || 1));
+    else if (e.type === 'single') totalAllocated += e.amount;
+  });
+  const purchase = goat.price || 0;
+  const total = purchase + totalAllocated;
+  const sale = DB.get('sales').find(s => s.goatId === id);
+  const profit = sale ? sale.price - total : null;
+  const notes = DB.get('notes').filter(n => n.goatId === id);
+
+  navigate('goat-profile');
+  document.getElementById('goat-profile-content').innerHTML = `
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="lg:col-span-2">
+        <div class="card mb-3">
+          <div class="flex justify-between items-start">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style="background:${goat.gender==='male'?'#e8f5e9':'#fce4ec'}">
+                ${goat.gender==='male'?'🐐':'🐑'}
+              </div>
+              <div>
+                <h2 class="font-black headline text-xl">${goat.name}</h2>
+                <p class="text-gray-400 text-sm">${goat.breed || 'Unknown Breed'} · ${goat.gender} · ${goat.acquisition || 'purchased'}</p>
+                <span class="badge badge-${goat.status} mt-1">${goat.status}</span>
+              </div>
+            </div>
+            <button class="btn-secondary text-sm flex-shrink-0" onclick="openEditGoat('${goat.id}')">Edit</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+          <div class="stat-card text-center">
+            <p class="text-xs text-gray-400 uppercase font-bold">Purchase</p>
+            <p class="font-black headline text-base mt-1">${fmt(purchase)}</p>
+          </div>
+          <div class="stat-card text-center">
+            <p class="text-xs text-gray-400 uppercase font-bold">Allocated</p>
+            <p class="font-black headline text-base mt-1 text-orange-500">${fmt(totalAllocated)}</p>
+          </div>
+          <div class="stat-card text-center">
+            <p class="text-xs text-gray-400 uppercase font-bold">Total Cost</p>
+            <p class="font-black headline text-base mt-1 text-red-500">${fmt(total)}</p>
+          </div>
+          <div class="stat-card text-center" style="background:${profit===null?'#f9f9f9':profit>=0?'#e8f5e9':'#fce4ec'}">
+            <p class="text-xs text-gray-400 uppercase font-bold">Profit/Loss</p>
+            <p class="font-black headline text-base mt-1 ${profit===null?'text-gray-400':profit>=0?'profit-positive':'profit-negative'}">
+              ${profit === null ? 'Unsold' : fmt(profit)}
+            </p>
+          </div>
+        </div>
+        <div class="card mb-3">
+          <h4 class="font-bold headline mb-2">Allocated Expenses</h4>
+          ${expenses.length ? expenses.map(e => `
+            <div class="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+              <div>
+                <p class="font-medium text-sm capitalize">${e.category}</p>
+                <p class="text-xs text-gray-400">${e.date} · ${e.type}${e.note?' · '+e.note:''}</p>
+              </div>
+              <p class="font-bold text-sm">${fmt(e.type==='all'?e.amount/(allGoatCount||1):e.type==='selected'?e.amount/(e.goatIds?.length||1):e.amount)}</p>
+            </div>
+          `).join('') : '<p class="text-sm text-gray-400">No expenses allocated</p>'}
+        </div>
+        ${sale ? `
+        <div class="card" style="background:#e8f5e9">
+          <h4 class="font-bold headline mb-2 text-primary">Sale Record</h4>
+          <div class="grid grid-cols-3 gap-3">
+            <div><p class="text-xs text-gray-500">Sell Price</p><p class="font-bold">${fmt(sale.price)}</p></div>
+            <div><p class="text-xs text-gray-500">Date</p><p class="font-bold">${sale.date}</p></div>
+            <div><p class="text-xs text-gray-500">Buyer</p><p class="font-bold">${sale.buyer || '-'}</p></div>
+          </div>
+        </div>` : ''}
+      </div>
+      <div class="space-y-3">
+        <div class="card">
+          <h5 class="font-bold headline mb-3">Goat Notes</h5>
+          ${notes.length ? notes.map(n => `
+            <div class="bg-yellow-50 rounded-lg p-3 mb-2">
+              <p class="text-sm">${n.content}</p>
+              <p class="text-xs text-gray-400 mt-1">${n.createdAt ? new Date(n.createdAt).toLocaleDateString('en-BD') : ''}</p>
+            </div>
+          `).join('') : '<p class="text-sm text-gray-400">No notes</p>'}
+          <button class="btn-secondary text-xs mt-3 w-full" onclick="navigate('notes')">Add Note</button>
+        </div>
+        <div class="card">
+          <h5 class="font-bold headline mb-2">Info</h5>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between"><span class="text-gray-400">Entry Date</span><span class="font-medium">${goat.date}</span></div>
+            <div class="flex justify-between"><span class="text-gray-400">Gender</span><span class="font-medium capitalize">${goat.gender}</span></div>
+            ${goat.notes ? `<div class="pt-2 border-t"><p class="text-xs text-gray-400 mb-1">Notes</p><p class="text-sm">${goat.notes}</p></div>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function openEditGoat(id) {
+  const goat = DB.get('goats').find(g => g.id === id);
+  if (!goat) return;
+  document.getElementById('edit-goat-id').value = id;
+  document.getElementById('edit-goat-name').value = goat.name;
+  document.getElementById('edit-goat-gender').value = goat.gender;
+  document.getElementById('edit-goat-status').value = goat.status;
+  document.getElementById('edit-goat-price').value = goat.price;
+  document.getElementById('edit-goat-breed').value = goat.breed || '';
+  document.getElementById('edit-goat-notes').value = goat.notes || '';
+  openModal('modal-edit-goat');
+}
+
+function updateGoat() {
+  const id = document.getElementById('edit-goat-id').value;
+  const goats = DB.get('goats');
+  const idx = goats.findIndex(g => g.id === id);
+  if (idx < 0) return;
+  goats[idx] = { ...goats[idx],
+    name: document.getElementById('edit-goat-name').value.trim(),
+    gender: document.getElementById('edit-goat-gender').value,
+    status: document.getElementById('edit-goat-status').value,
+    price: parseFloat(document.getElementById('edit-goat-price').value) || 0,
+    breed: document.getElementById('edit-goat-breed').value.trim(),
+    notes: document.getElementById('edit-goat-notes').value.trim()
+  };
+  DB.set('goats', goats);
+  closeModal('modal-edit-goat');
+  toast('✅ Goat updated!');
+  renderGoats();
+}
+
+function deleteGoat(id) {
+  if (!confirm('এই ছাগলটি মুছে ফেলবেন?')) return;
+  DB.set('goats', DB.get('goats').filter(g => g.id !== id));
+  toast('🗑️ Goat removed');
+  renderGoats();
+}
+
+// ============================================================
+// EXPENSE MANAGEMENT
+// ============================================================
+function onExpTypeChange() {
+  const type = document.querySelector('input[name="exp-type"]:checked')?.value;
+  document.getElementById('selected-goats-section').style.display = type === 'selected' ? 'block' : 'none';
+  document.getElementById('single-goat-section').style.display = type === 'single' ? 'block' : 'none';
+  if (type === 'selected') renderGoatCheckboxes();
+  if (type === 'single') renderSingleGoatDropdown();
+}
+
+function renderGoatCheckboxes() {
+  const goats = DB.get('goats').filter(g => g.status === 'active');
+  document.getElementById('goat-checkbox-list').innerHTML = goats.map(g => `
+    <label>
+      <input type="checkbox" name="exp-goat" value="${g.id}"/>
+      <span>${g.name}</span>
+    </label>
+  `).join('') || '<p class="text-sm text-gray-400">No active goats</p>';
+}
+
+function renderSingleGoatDropdown() {
+  const goats = DB.get('goats').filter(g => g.status === 'active');
+  const sel = document.getElementById('exp-single-goat');
+  sel.innerHTML = '<option value="">-- Select --</option>' + goats.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+}
+
+function renderOwnerCheckboxes() {
+  const owners = DB.get('owners');
+  document.getElementById('owner-checkbox-list').innerHTML = owners.map(o => `
+    <label>
+      <input type="checkbox" name="exp-owner" value="${o.id}"/>
+      <span>${o.name}</span>
+    </label>
+  `).join('') || '<p class="text-sm text-gray-400">Add owners first</p>';
+}
+
+function saveExpense() {
+  const amount = parseFloat(document.getElementById('exp-amount').value);
+  const date = document.getElementById('exp-date').value;
+  const category = document.getElementById('exp-category').value;
+  const method = document.getElementById('exp-method').value.trim();
+  const note = document.getElementById('exp-note').value.trim();
+  if (!amount || amount <= 0) { toast('❌ Amount দিন'); return; }
+  if (!date) { toast('❌ Date দিন'); return; }
+
+  const type = document.querySelector('input[name="exp-type"]:checked')?.value || 'all';
+  let goatIds = [], goatId = '';
+  if (type === 'selected') {
+    goatIds = [...document.querySelectorAll('input[name="exp-goat"]:checked')].map(c => c.value);
+    if (!goatIds.length) { toast('❌ কমপক্ষে একটি goat select করুন'); return; }
+  }
+  if (type === 'single') {
+    goatId = document.getElementById('exp-single-goat').value;
+    if (!goatId) { toast('❌ একটি goat select করুন'); return; }
+  }
+  const paidBy = [...document.querySelectorAll('input[name="exp-owner"]:checked')].map(c => c.value);
+
+  const expense = { id: uid(), amount, date, category, method, note, type, goatIds, goatId, paidBy, createdAt: Date.now() };
+  const expenses = DB.get('expenses');
+  expenses.push(expense);
+  DB.set('expenses', expenses);
+
+  // Update ledger for paidBy
+  if (paidBy.length) {
+    const perOwner = amount / paidBy.length;
+    const ledger = DB.get('ledger');
+    paidBy.forEach(oid => {
+      ledger.push({ id: uid(), type: 'expense', ownerId: oid, amount: perOwner, date, note: `Expense: ${category}`, createdAt: Date.now() });
+    });
+    DB.set('ledger', ledger);
+  }
+
+  addActivity('expense', `Expense: ${category} (${type})`, amount, 'debit');
+  ['exp-amount','exp-note','exp-method'].forEach(id => document.getElementById(id).value = '');
+  document.querySelectorAll('input[name="exp-goat"]:checked, input[name="exp-owner"]:checked').forEach(c => c.checked = false);
+  toast('✅ Expense saved!');
+  renderExpenses();
+  renderExpenseSummary();
+}
+
+function renderExpenses() {
+  const from = document.getElementById('exp-filter-from')?.value;
+  const to = document.getElementById('exp-filter-to')?.value;
+  let expenses = DB.get('expenses');
+  if (from) expenses = expenses.filter(e => e.date >= from);
+  if (to) expenses = expenses.filter(e => e.date <= to);
+  expenses.sort((a, b) => b.createdAt - a.createdAt);
+
+  const list = document.getElementById('expense-list');
+  if (!expenses.length) {
+    list.innerHTML = '<p class="text-center text-gray-400 py-8 text-sm">কোনো খরচ নেই</p>';
+    return;
+  }
+  const owners = DB.get('owners');
+  list.innerHTML = expenses.map(e => {
+    const paidOwners = (e.paidBy || []).map(id => owners.find(o => o.id === id)?.name?.split(' ')[0] || '?').join(', ');
+    return `
+    <div class="table-row" style="grid-template-columns:1fr 90px 80px 90px">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0" style="background:${catColor(e.category)}20;color:${catColor(e.category)}">
+          ${catIcon(e.category)}
+        </div>
+        <div class="min-w-0">
+          <p class="font-medium text-sm capitalize">${e.category}
+            <span class="text-xs text-gray-400 ml-1 md:hidden">· ${e.date} · ${fmt(e.amount)}</span>
+          </p>
+          <p class="text-xs text-gray-400 truncate">${e.note || e.type} ${e.method ? '· ' + e.method : ''}</p>
+        </div>
+      </div>
+      <span class="text-sm text-gray-500 hidden md:block">${e.date}</span>
+      <span class="text-xs text-gray-500 hidden md:block">${paidOwners || '-'}</span>
+      <div class="text-right flex items-center justify-end gap-2">
+        <span class="font-bold text-sm hidden md:block">${fmt(e.amount)}</span>
+        <button class="text-gray-300 hover:text-red-400 text-xs" onclick="deleteExpense('${e.id}')">✕</button>
+      </div>
+    </div>
+  `}).join('');
+}
+
+function deleteExpense(id) {
+  if (!confirm('এই খরচ মুছে ফেলবেন?')) return;
+  DB.set('expenses', DB.get('expenses').filter(e => e.id !== id));
+  toast('🗑️ Expense deleted');
+  renderExpenses(); renderExpenseSummary();
+}
+
+function renderExpenseSummary() {
+  const expenses = DB.get('expenses');
+  const now = new Date();
+  const thisMonth = expenses.filter(e => {
+    if (!e.date) return false;
+    const d = new Date(e.date);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  const monthTotal = thisMonth.reduce((s, e) => s + e.amount, 0);
+  const allTotal = expenses.reduce((s, e) => s + e.amount, 0);
+  const el = document.getElementById('exp-this-month');
+  if (el) el.textContent = fmt(monthTotal);
+
+  const catTotals = {};
+  expenses.forEach(e => catTotals[e.category] = (catTotals[e.category] || 0) + e.amount);
+  const breakdownEl = document.getElementById('category-breakdown');
+  if (breakdownEl) {
+    breakdownEl.innerHTML = Object.entries(catTotals).map(([cat, total]) => `
+      <div class="flex justify-between items-center">
+        <span class="text-sm capitalize">${cat}</span>
+        <div class="flex items-center gap-2">
+          <div class="w-16 h-1.5 bg-gray-100 rounded-full"><div class="h-full rounded-full" style="width:${allTotal?Math.min(100,total/allTotal*100):0}%;background:${catColor(cat)}"></div></div>
+          <span class="text-sm font-bold">${fmt(total)}</span>
+        </div>
+      </div>
+    `).join('') || '<p class="text-sm text-gray-400">No data</p>';
+  }
+}
+
+function catColor(c) {
+  const map = {feed:'#206223',medicine:'#884200',salary:'#7a5649',transport:'#1565c0',other:'#6d4c41'};
+  return map[c] || '#706d6d';
+}
+function catIcon(c) {
+  const map = {feed:'🌾',medicine:'💊',salary:'💵',transport:'🚗',other:'📋'};
+  return map[c] || '💰';
+}
+
+// ============================================================
+// OWNER MANAGEMENT
+// ============================================================
+function saveOwner() {
+  const name = document.getElementById('owner-name').value.trim();
+  const share = parseFloat(document.getElementById('owner-share').value) || 0;
+  if (!name) { toast('❌ নাম দিন'); return; }
+  const owner = {
+    id: uid(), name,
+    role: document.getElementById('owner-role').value.trim(),
+    share, phone: document.getElementById('owner-phone').value.trim(),
+    createdAt: Date.now()
+  };
+  const owners = DB.get('owners');
+  owners.push(owner);
+  DB.set('owners', owners);
+  closeModal('modal-add-owner');
+  ['owner-name','owner-role','owner-share','owner-phone'].forEach(id => document.getElementById(id).value = '');
+  toast('✅ Owner added!');
+  renderOwners(); renderOwnerCheckboxes();
+}
+
+function renderOwners() {
+  const owners = DB.get('owners');
+  const expenses = DB.get('expenses');
+  const ledger = DB.get('ledger');
+  const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+  const totalSales = DB.get('sales').reduce((s, s2) => s + s2.price, 0);
+  const farmCapital = DB.get('goats').reduce((s, g) => s + (g.price || 0), 0) + totalExpenses;
+
+  const el = document.getElementById('farm-capital');
+  if (el) el.textContent = fmt(farmCapital);
+
+  // Owner cards
+  const cardsEl = document.getElementById('owner-cards');
+  if (cardsEl) {
+    cardsEl.innerHTML = owners.map(o => `
+      <div class="card">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-white" style="background:linear-gradient(135deg,#206223,#3a7b3a)">
+            ${o.name.charAt(0)}
+          </div>
+          <div>
+            <p class="font-bold headline">${o.name}</p>
+            <p class="text-xs text-gray-400">${o.role || 'Partner'}</p>
+          </div>
+          <span class="ml-auto text-2xl font-black headline text-primary">${o.share}%</span>
+        </div>
+        <div class="w-full h-1.5 bg-gray-100 rounded-full">
+          <div class="h-full bg-primary rounded-full" style="width:${o.share}%"></div>
+        </div>
+        <p class="text-xs text-gray-400 mt-2">${o.phone || ''}</p>
+      </div>
+    `).join('') || '<p class="text-sm text-gray-400">কোনো মালিক নেই</p>';
+  }
+
+  // Contribution Tracking
+  const contribEl = document.getElementById('contribution-list');
+  if (contribEl) {
+    if (!owners.length) { contribEl.innerHTML = '<p class="text-center text-gray-400 py-6 text-sm">কোনো মালিক নেই</p>'; }
+    else {
+      contribEl.innerHTML = owners.map(o => {
+        const paid = ledger.filter(l => l.ownerId === o.id && l.type === 'expense').reduce((s, l) => s + l.amount, 0);
+        const required = totalExpenses * (o.share / 100);
+        const diff = paid - required;
+        const status = Math.abs(diff) < 1 ? 'cleared' : diff > 0 ? 'excess' : 'pending';
+        return `
+          <div class="table-row" style="grid-template-columns:1fr 100px 100px 90px 80px">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white text-sm" style="background:#206223">${o.name.charAt(0)}</div>
+              <span class="font-medium text-sm">${o.name}</span>
+            </div>
+            <div>
+              <p class="font-bold text-sm">${fmt(paid)}</p>
+              ${diff !== 0 ? `<p class="text-xs ${diff>0?'text-primary':'text-red-500'}">${diff>0?'EXCESS':'DUE'}: ${fmt(Math.abs(diff))}</p>` : ''}
+            </div>
+            <span class="text-sm">${fmt(required)}</span>
+            <span><span class="badge ${status==='cleared'?'badge-active':status==='excess'?'badge-active':'badge-pending'}">${status==='cleared'?'Cleared':status==='excess'?'Excess':'Pending'}</span></span>
+            <button class="btn-secondary text-xs px-2 py-1" onclick="openEditOwner('${o.id}')">Edit</button>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // Balance Ledger
+  const ledgerEl = document.getElementById('balance-ledger');
+  if (ledgerEl) {
+    if (owners.length < 2) { ledgerEl.innerHTML = '<p class="text-sm text-gray-400">দুইজন মালিক থাকলে balance দেখাবে</p>'; }
+    else {
+      let html = '';
+      owners.forEach(o => {
+        const paid = ledger.filter(l => l.ownerId === o.id && l.type === 'expense').reduce((s, l) => s + l.amount, 0);
+        const required = totalExpenses * (o.share / 100);
+        const diff = paid - required;
+        if (diff < -1) {
+          const creditor = owners.find(c => {
+            const cpaid = ledger.filter(l => l.ownerId === c.id && l.type === 'expense').reduce((s, l) => s + l.amount, 0);
+            return cpaid > totalExpenses * (c.share / 100);
+          });
+          if (creditor) {
+            html += `
+              <div class="bg-red-50 rounded-xl p-4 mb-3">
+                <p class="text-xs text-gray-400 uppercase font-bold mb-1">Payment Suggestion</p>
+                <p class="font-bold"><span class="text-red-600">${o.name}</span> owes <span class="text-primary">${creditor.name}</span></p>
+                <p class="text-xl font-black text-red-500 mt-1">${fmt(Math.abs(diff))}</p>
+              </div>
+            `;
+          }
+        }
+      });
+      if (!html) html = '<div class="bg-green-50 rounded-xl p-4"><p class="font-bold text-primary">✅ All settled!</p></div>';
+      ledgerEl.innerHTML = html;
+    }
+  }
+
+  // Update ledger dropdowns
+  ['ledger-from','ledger-to'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '<option value="">-- Select --</option>' + owners.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+  });
+
+  renderSettingsOwners();
+}
+
+function openEditOwner(id) {
+  const o = DB.get('owners').find(o => o.id === id);
+  if (!o) return;
+  document.getElementById('edit-owner-id').value = id;
+  document.getElementById('edit-owner-name').value = o.name;
+  document.getElementById('edit-owner-role').value = o.role || '';
+  document.getElementById('edit-owner-share').value = o.share;
+  document.getElementById('edit-owner-phone').value = o.phone || '';
+  openModal('modal-edit-owner');
+}
+
+function updateOwner() {
+  const id = document.getElementById('edit-owner-id').value;
+  const owners = DB.get('owners');
+  const idx = owners.findIndex(o => o.id === id);
+  if (idx < 0) return;
+  owners[idx] = { ...owners[idx],
+    name: document.getElementById('edit-owner-name').value.trim(),
+    role: document.getElementById('edit-owner-role').value.trim(),
+    share: parseFloat(document.getElementById('edit-owner-share').value) || 0,
+    phone: document.getElementById('edit-owner-phone').value.trim()
+  };
+  DB.set('owners', owners);
+  closeModal('modal-edit-owner');
+  toast('✅ Owner updated!');
+  renderOwners();
+}
+
+function deleteOwner(id) {
+  if (!confirm('এই মালিক মুছে ফেলবেন?')) return;
+  DB.set('owners', DB.get('owners').filter(o => o.id !== id));
+  toast('🗑️ Owner removed');
+  renderOwners();
+}
+
+function recordPayment() {
+  const from = document.getElementById('ledger-from').value;
+  const to = document.getElementById('ledger-to').value;
+  const amount = parseFloat(document.getElementById('ledger-amount').value);
+  const note = document.getElementById('ledger-note').value.trim();
+  if (!from || !to || !amount) { toast('❌ সব তথ্য দিন'); return; }
+  if (from === to) { toast('❌ From এবং To আলাদা হতে হবে'); return; }
+  const ledger = DB.get('ledger');
+  ledger.push({ id: uid(), type: 'expense', ownerId: from, amount, date: today(), note: note || 'Settlement', createdAt: Date.now() });
+  DB.set('ledger', ledger);
+  document.getElementById('ledger-amount').value = '';
+  document.getElementById('ledger-note').value = '';
+  toast('✅ Payment recorded!');
+  renderOwners();
+}
+
+// ============================================================
+// SALES
+// ============================================================
+function renderSaleGoatDropdown() {
+  const goats = DB.get('goats').filter(g => g.status === 'active');
+  const sel = document.getElementById('sale-goat');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">-- Active Goat Select করুন --</option>' + goats.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+  if (!document.getElementById('sale-date').value) document.getElementById('sale-date').value = today();
+}
+
+function updateSalePreview() {
+  const goatId = document.getElementById('sale-goat')?.value;
+  const price = parseFloat(document.getElementById('sale-price')?.value) || 0;
+  const preview = document.getElementById('sale-preview');
+  if (!goatId || !price) { preview.style.display = 'none'; return; }
+  const cost = getGoatTotalCost(goatId);
+  const profit = price - cost;
+  preview.style.display = 'block';
+  document.getElementById('prev-cost').textContent = fmt(cost);
+  document.getElementById('prev-sell').textContent = fmt(price);
+  const profitEl = document.getElementById('prev-profit');
+  profitEl.textContent = fmt(profit);
+  profitEl.className = 'font-black ' + (profit >= 0 ? 'profit-positive' : 'profit-negative');
+}
+
+function getGoatTotalCost(goatId) {
+  const goat = DB.get('goats').find(g => g.id === goatId);
+  if (!goat) return 0;
+  const allGoatCount = DB.get('goats').filter(g => g.status !== 'dead').length;
+  const expenses = DB.get('expenses');
+  let allocated = 0;
+  expenses.forEach(e => {
+    if (e.type === 'all') allocated += e.amount / (allGoatCount || 1);
+    else if (e.type === 'selected' && e.goatIds?.includes(goatId)) allocated += e.amount / (e.goatIds.length || 1);
+    else if (e.type === 'single' && e.goatId === goatId) allocated += e.amount;
+  });
+  return (goat.price || 0) + allocated;
+}
+
+function saveSale() {
+  const goatId = document.getElementById('sale-goat').value;
+  const price = parseFloat(document.getElementById('sale-price').value);
+  const date = document.getElementById('sale-date').value;
+  const buyer = document.getElementById('sale-buyer').value.trim();
+  if (!goatId) { toast('❌ Goat select করুন'); return; }
+  if (!price || price <= 0) { toast('❌ Sell price দিন'); return; }
+  if (!date) { toast('❌ Date দিন'); return; }
+
+  const cost = getGoatTotalCost(goatId);
+  const sale = { id: uid(), goatId, price, date, buyer, cost, profit: price - cost, createdAt: Date.now() };
+  const sales = DB.get('sales');
+  sales.push(sale);
+  DB.set('sales', sales);
+
+  // Update goat status
+  const goats = DB.get('goats');
+  const gidx = goats.findIndex(g => g.id === goatId);
+  if (gidx >= 0) { goats[gidx].status = 'sold'; DB.set('goats', goats); }
+
+  addActivity('sale', `Goat sold: ${goats[gidx]?.name || goatId}${buyer ? ' to ' + buyer : ''}`, price, 'credit');
+  ['sale-price','sale-buyer'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('sale-goat').value = '';
+  document.getElementById('sale-preview').style.display = 'none';
+  toast('✅ Sale recorded! Goat marked as Sold.');
+  renderSales(); renderSaleGoatDropdown();
+}
+
+function renderSales() {
+  const sales = DB.get('sales');
+  const goats = DB.get('goats');
+  sales.sort((a, b) => b.createdAt - a.createdAt);
+
+  const total = sales.reduce((s, s2) => s + s2.price, 0);
+  const profit = sales.reduce((s, s2) => s + s2.profit, 0);
+  document.getElementById('sales-total-rev').textContent = fmt(total);
+  document.getElementById('sales-net-profit').textContent = fmt(profit);
+  document.getElementById('sales-net-profit').className = 'text-2xl font-black headline mt-1 ' + (profit >= 0 ? 'profit-positive' : 'profit-negative');
+  document.getElementById('sales-count').textContent = sales.length;
+
+  const list = document.getElementById('sale-list');
+  if (!sales.length) { list.innerHTML = '<p class="text-center text-gray-400 py-8 text-sm">কোনো বিক্রি নেই</p>'; return; }
+  list.innerHTML = sales.map(s => {
+    const goat = goats.find(g => g.id === s.goatId);
+    return `
+    <div class="table-row" style="grid-template-columns:1fr 90px 100px 100px 90px">
+      <div>
+        <p class="font-medium text-sm">${goat?.name || s.goatId}</p>
+        <p class="text-xs text-gray-400">${goat?.breed || ''}</p>
+      </div>
+      <span class="text-sm text-gray-500">${s.date}</span>
+      <span class="text-sm">${s.buyer || '-'}</span>
+      <span class="font-bold text-sm">${fmt(s.price)}</span>
+      <span class="font-bold text-sm text-right ${s.profit>=0?'profit-positive':'profit-negative'}">${fmt(s.profit)}</span>
+    </div>
+  `}).join('');
+
+  // Top profitable
+  const sorted = [...sales].sort((a, b) => b.profit - a.profit).slice(0, 3);
+  document.getElementById('top-profitable').innerHTML = sorted.map(s => {
+    const goat = goats.find(g => g.id === s.goatId);
+    return `<div class="flex justify-between text-sm"><span class="font-medium">${goat?.name || s.goatId}</span><span class="${s.profit>=0?'profit-positive':'profit-negative'}">${fmt(s.profit)}</span></div>`;
+  }).join('') || '<p class="text-sm text-gray-400">No sales</p>';
+}
+
+// ============================================================
+// REPORTS
+// ============================================================
+function renderReports() {
+  const from = document.getElementById('report-from')?.value;
+  const to = document.getElementById('report-to')?.value;
+  let expenses = DB.get('expenses');
+  let sales = DB.get('sales');
+  if (from) { expenses = expenses.filter(e => e.date >= from); sales = sales.filter(s => s.date >= from); }
+  if (to) { expenses = expenses.filter(e => e.date <= to); sales = sales.filter(s => s.date <= to); }
+
+  const totalExp = expenses.reduce((s, e) => s + e.amount, 0);
+  const totalSales = sales.reduce((s, s2) => s + s2.price, 0);
+  const netProfit = totalSales - totalExp;
+  document.getElementById('rep-expenses').textContent = fmt(totalExp);
+  document.getElementById('rep-sales').textContent = fmt(totalSales);
+  const profEl = document.getElementById('rep-profit');
+  profEl.textContent = fmt(netProfit);
+  profEl.className = 'text-2xl font-black headline mt-1 ' + (netProfit >= 0 ? 'profit-positive' : 'profit-negative');
+
+  // Goat-wise profit
+  const goats = DB.get('goats');
+  const goatProfitEl = document.getElementById('goat-profit-list');
+  goatProfitEl.innerHTML = goats.map(g => {
+    const cost = getGoatTotalCost(g.id);
+    const sale = sales.find(s => s.goatId === g.id);
+    const profit = sale ? sale.price - cost : null;
+    return `
+      <div class="table-row" style="grid-template-columns:80px 1fr 110px 110px 110px 100px">
+        <span class="text-xs text-gray-400 font-mono">${g.id.slice(-6)}</span>
+        <span class="font-medium text-sm">${g.name}</span>
+        <span class="text-sm">${fmt(cost)}</span>
+        <span class="text-sm">${sale ? fmt(sale.price) : '-'}</span>
+        <span class="font-bold text-sm ${profit===null?'text-gray-400':profit>=0?'profit-positive':'profit-negative'}">${profit===null?'Unsold':fmt(profit)}</span>
+        <span><span class="badge badge-${g.status}">${g.status}</span></span>
+      </div>
+    `;
+  }).join('') || '<p class="text-center text-gray-400 py-6 text-sm">No data</p>';
+
+  // Category breakdown
+  const catTotals = {};
+  expenses.forEach(e => catTotals[e.category] = (catTotals[e.category] || 0) + e.amount);
+  document.getElementById('report-category-breakdown').innerHTML = Object.entries(catTotals).map(([cat, total]) => `
+    <div class="flex items-center gap-3">
+      <span class="w-24 text-sm capitalize">${cat}</span>
+      <div class="flex-1 h-2 bg-gray-100 rounded-full">
+        <div class="h-full rounded-full" style="width:${totalExp?Math.min(100,total/totalExp*100):0}%;background:${catColor(cat)}"></div>
+      </div>
+      <span class="font-bold text-sm">${fmt(total)}</span>
+    </div>
+  `).join('') || '<p class="text-sm text-gray-400">No data</p>';
+
+  // Owner contribution
+  const owners = DB.get('owners');
+  const ledger = DB.get('ledger');
+  document.getElementById('report-owner-contribution').innerHTML = owners.map(o => {
+    const paid = ledger.filter(l => l.ownerId === o.id && l.type === 'expense').reduce((s, l) => s + l.amount, 0);
+    const share = totalExp * (o.share / 100);
+    return `
+      <div class="flex items-center gap-4">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white text-sm flex-shrink-0" style="background:#206223">${o.name.charAt(0)}</div>
+        <div class="flex-1">
+          <p class="font-medium text-sm">${o.name} (${o.share}%)</p>
+          <p class="text-xs text-gray-400">Paid: ${fmt(paid)} | Required: ${fmt(share)}</p>
+        </div>
+        <span class="badge ${paid >= share ? 'badge-active' : 'badge-pending'}">${paid >= share ? 'OK' : 'Due'}</span>
+      </div>
+    `;
+  }).join('') || '<p class="text-sm text-gray-400">No owners</p>';
+}
+
+function printReport() {
+  window.print();
+}
+
+// ============================================================
+// NOTES
+// ============================================================
+function toggleNoteGoat() {
+  const type = document.querySelector('input[name="note-type"]:checked')?.value;
+  document.getElementById('note-goat-section').style.display = type === 'goat' ? 'block' : 'none';
+}
+
+function renderNoteGoatDropdown() {
+  const goats = DB.get('goats');
+  const sel = document.getElementById('note-goat-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">-- Select Goat --</option>' + goats.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+}
+
+function saveNote() {
+  const content = document.getElementById('note-content').value.trim();
+  if (!content) { toast('❌ Note লিখুন'); return; }
+  const type = document.querySelector('input[name="note-type"]:checked')?.value || 'general';
+  const goatId = type === 'goat' ? document.getElementById('note-goat-select').value : null;
+  if (type === 'goat' && !goatId) { toast('❌ Goat select করুন'); return; }
+
+  const note = { id: uid(), content, type, goatId, createdAt: Date.now() };
+  const notes = DB.get('notes');
+  notes.push(note);
+  DB.set('notes', notes);
+  document.getElementById('note-content').value = '';
+  toast('✅ Note saved!');
+  renderNotes();
+}
+
+let noteFilter = 'all';
+function filterNotes(f) { noteFilter = f; renderNotes(); }
+
+function renderNotes() {
+  const notes = DB.get('notes');
+  const goats = DB.get('goats');
+  const filtered = notes.filter(n => noteFilter === 'all' || n.type === noteFilter);
+  filtered.sort((a, b) => b.createdAt - a.createdAt);
+
+  document.getElementById('note-general-count').textContent = notes.filter(n => n.type === 'general').length;
+  document.getElementById('note-goat-count').textContent = notes.filter(n => n.type === 'goat').length;
+  document.getElementById('note-total-count').textContent = notes.length;
+
+  const list = document.getElementById('notes-list');
+  if (!filtered.length) { list.innerHTML = '<p class="text-center text-gray-400 py-8 text-sm">কোনো নোট নেই</p>'; return; }
+  list.innerHTML = filtered.map(n => {
+    const goat = n.goatId ? goats.find(g => g.id === n.goatId) : null;
+    return `
+      <div class="card" style="border-left:3px solid ${n.type==='goat'?'#206223':'#884200'}">
+        <div class="flex justify-between items-start">
+          <div>
+            ${goat ? `<span class="badge badge-active text-xs mb-2">🐐 ${goat.name}</span>` : `<span class="badge" style="background:#ffeee6;color:#884200" class="text-xs mb-2">📝 General</span>`}
+            <p class="text-sm mt-1">${n.content}</p>
+            <p class="text-xs text-gray-400 mt-2">${new Date(n.createdAt).toLocaleDateString('en-BD')}</p>
+          </div>
+          <button onclick="deleteNote('${n.id}')" class="text-gray-300 hover:text-red-400 ml-3">✕</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function deleteNote(id) {
+  DB.set('notes', DB.get('notes').filter(n => n.id !== id));
+  toast('🗑️ Note deleted');
+  renderNotes();
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function renderSettings() {
+  const cats = DB.get('categories');
+  document.getElementById('category-list').innerHTML = cats.map(c => `
+    <div class="flex justify-between items-center py-2 px-3 rounded-lg bg-gray-50">
+      <span class="text-sm font-medium capitalize">${catIcon(c)} ${c}</span>
+      <button class="btn-danger text-xs" onclick="deleteCategory('${c}')">Delete</button>
+    </div>
+  `).join('') || '<p class="text-sm text-gray-400">No categories</p>';
+
+  renderSettingsOwners();
+}
+
+function renderSettingsOwners() {
+  const owners = DB.get('owners');
+  const el = document.getElementById('settings-owner-list');
+  if (!el) return;
+  el.innerHTML = owners.map(o => `
+    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+      <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-sm" style="background:#206223">${o.name.charAt(0)}</div>
+      <div class="flex-1">
+        <p class="font-bold text-sm">${o.name}</p>
+        <p class="text-xs text-gray-400">${o.role || ''} • ${o.share}%</p>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn-secondary text-xs px-2 py-1" onclick="openEditOwner('${o.id}')">Edit</button>
+        <button class="btn-danger" onclick="deleteOwner('${o.id}')">Del</button>
+      </div>
+    </div>
+  `).join('') || '<p class="text-sm text-gray-400 py-3">কোনো মালিক নেই</p>';
+}
+
+function addCategory() {
+  const val = document.getElementById('new-category-input').value.trim().toLowerCase();
+  if (!val) { toast('❌ Category নাম দিন'); return; }
+  const cats = DB.get('categories');
+  if (cats.includes(val)) { toast('❌ এই category ইতিমধ্যে আছে'); return; }
+  cats.push(val);
+  DB.set('categories', cats);
+  document.getElementById('new-category-input').value = '';
+  toast('✅ Category added!');
+  renderSettings();
+  // Refresh expense category dropdown
+  const sel = document.getElementById('exp-category');
+  if (sel) sel.innerHTML = DB.get('categories').map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+function deleteCategory(cat) {
+  if (!confirm(`"${cat}" category মুছে ফেলবেন?`)) return;
+  DB.set('categories', DB.get('categories').filter(c => c !== cat));
+  toast('🗑️ Category deleted');
+  renderSettings();
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard() {
+  const goats = DB.get('goats');
+  const expenses = DB.get('expenses');
+  const sales = DB.get('sales');
+
+  const totalExp = expenses.reduce((s, e) => s + e.amount, 0);
+  const totalSales = sales.reduce((s, s2) => s + s2.price, 0);
+  const netProfit = totalSales - totalExp;
+  const activeGoats = goats.filter(g => g.status === 'active').length;
+
+  document.getElementById('dash-profit').textContent = fmt(netProfit);
+  document.getElementById('dash-profit').className = 'text-3xl font-black headline mt-1 ' + (netProfit >= 0 ? '' : 'text-red-300');
+  document.getElementById('dash-expenses').textContent = fmt(totalExp);
+  document.getElementById('dash-expense-count').textContent = expenses.length + ' transactions';
+  document.getElementById('dash-sales').textContent = fmt(totalSales);
+  document.getElementById('dash-sales-count').textContent = sales.length + ' goats sold';
+  document.getElementById('dash-goat-count').textContent = goats.length;
+  document.getElementById('dash-active-goats').textContent = activeGoats + ' active';
+
+  renderExpenseChart();
+  renderRecentActivities();
+}
+
+function renderExpenseChart() {
+  const expenses = DB.get('expenses');
+  const now = new Date();
+  const months = [];
+  const labels = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    months.push(key);
+    labels.push(d.toLocaleString('en', {month:'short'}).toUpperCase());
+  }
+  const totals = months.map(m => expenses.filter(e => e.date && e.date.startsWith(m)).reduce((s, e) => s + e.amount, 0));
+  const maxVal = Math.max(...totals, 1);
+
+  const chartEl = document.getElementById('expense-chart');
+  const labelsEl = document.getElementById('chart-labels');
+  if (!chartEl) return;
+
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  chartEl.innerHTML = totals.map((t, i) => {
+    const pct = Math.max(4, (t / maxVal) * 100);
+    const isCurrent = months[i] === currentMonth;
+    return `
+      <div class="flex-1 flex flex-col items-center justify-end group relative">
+        <div class="absolute -top-6 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap" style="color:#206223">${fmt(t)}</div>
+        <div class="w-full rounded-t-lg transition-all duration-500" style="height:${pct}%;background:${isCurrent?'#206223':'#e8e8e8'}"></div>
+      </div>
+    `;
+  }).join('');
+  if (labelsEl) labelsEl.innerHTML = labels.map(l => `<span>${l}</span>`).join('');
+}
+
+function renderRecentActivities() {
+  const activities = DB.get('activities');
+  const el = document.getElementById('recent-activities');
+  if (!el) return;
+  const recent = activities.slice(-6).reverse();
+  if (!recent.length) { el.innerHTML = '<p class="text-sm text-gray-400 text-center py-8">কোনো কার্যক্রম নেই</p>'; return; }
+  el.innerHTML = recent.map(a => {
+    const iconMap = {expense:'payments',goat_added:'pets',sale:'point_of_sale'};
+    const colorMap = {expense:'#ba1a1a',goat_added:'#206223',sale:'#206223'};
+    return `
+      <div class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full flex items-center justify-center" style="background:${colorMap[a.type] || '#eeeeee'}20;color:${colorMap[a.type] || '#40493d'}">
+            <span class="material-symbols-outlined text-lg">${iconMap[a.type] || 'info'}</span>
+          </div>
+          <div>
+            <p class="font-medium text-sm">${a.label}</p>
+            <p class="text-xs text-gray-400">${new Date(a.createdAt).toLocaleDateString('en-BD')}</p>
+          </div>
+        </div>
+        <p class="font-bold text-sm ${a.txType==='credit'?'profit-positive':'profit-negative'}">${a.txType==='credit'?'+':'-'} ${fmt(a.amount)}</p>
+      </div>
+    `;
+  }).join('');
+}
+
+function addActivity(type, label, amount, txType) {
+  const activities = DB.get('activities');
+  activities.push({ id: uid(), type, label, amount, txType, createdAt: Date.now() });
+  if (activities.length > 50) activities.shift();
+  DB.set('activities', activities);
+}
+
+// ============================================================
+// BACKUP & RESTORE
+// ============================================================
+function backupData() {
+  const data = {};
+  ['goats','expenses','owners','sales','notes','ledger','categories','activities'].forEach(k => {
+    data[k] = DB.get(k);
+  });
+  data.exportedAt = new Date().toISOString();
+  data.version = '1.0';
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `khamar_khata_backup_${today()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('✅ Backup downloaded!');
+}
+
+function triggerRestore() {
+  document.getElementById('restore-input').click();
+}
+
+function restoreData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!confirm(`Restore করবেন? সব current data replace হয়ে যাবে।`)) return;
+      ['goats','expenses','owners','sales','notes','ledger','categories','activities'].forEach(k => {
+        if (data[k]) DB.set(k, data[k]);
+      });
+      toast('✅ Data restored successfully!');
+      navigate('dashboard');
+    } catch {
+      toast('❌ Invalid backup file');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function clearAllData() {
+  if (!confirm('সব data মুছে ফেলবেন? এটা undo করা যাবে না!')) return;
+  ['goats','expenses','owners','sales','notes','ledger','categories','activities'].forEach(k => localStorage.removeItem('kk_' + k));
+  seedIfEmpty();
+  toast('🗑️ All data cleared');
+  navigate('dashboard');
+}
+
+// ============================================================
+// SEARCH
+// ============================================================
+function handleSearch(query) {
+  if (!query.trim()) return;
+  const q = query.toLowerCase();
+  const goats = DB.get('goats').filter(g => g.name.toLowerCase().includes(q));
+  if (goats.length) {
+    navigate('goats');
+    setTimeout(() => {
+      document.getElementById('goat-filter-status').value = '';
+      document.getElementById('goat-filter-gender').value = '';
+      renderGoats();
+    }, 100);
+  }
+}
+
+// ============================================================
+// EXPENSE CATEGORY DROPDOWN SYNC
+// ============================================================
+function syncCategoryDropdown() {
+  const cats = DB.get('categories');
+  const sel = document.getElementById('exp-category');
+  if (sel && cats.length) {
+    sel.innerHTML = cats.map(c => `<option value="${c}">${catIcon(c)} ${c.charAt(0).toUpperCase() + c.slice(1)}</option>`).join('');
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  seedIfEmpty();
+  // Set today's date on expense form
+  const expDate = document.getElementById('exp-date');
+  if (expDate) expDate.value = today();
+  // Initial expense category sync
+  syncCategoryDropdown();
+  // Render dashboard
+  renderDashboard();
+  // Render owner checkboxes
+  renderOwnerCheckboxes();
+}
+
+init();
+</script>
+
+</div><!-- end #app-screen -->
+
+<!-- ===== SUPABASE AUTH + DB INTEGRATION ===== -->
+<script>
+// ============================================================
+// SUPABASE SETUP
+// ============================================================
+const SUPABASE_URL = 'https://xebvfbpzhwjuwmrnsuyr.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhlYnZmYnB6aHdqdXdtcm5zdXlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2ODE4NTIsImV4cCI6MjA5MTI1Nzg1Mn0.4LRfhxxf4A1SMBFoKvNJ2Z4d55xkwnVmiKHnnomwoX0';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null;
+
+// ============================================================
+// AUTH UI HELPERS
+// ============================================================
+function switchTab(tab) {
+  document.getElementById('form-login').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('form-register').style.display = tab === 'register' ? 'block' : 'none';
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+  document.getElementById('auth-error').style.display = 'none';
+  document.getElementById('auth-error-reg').style.display = 'none';
+}
+
+function showAuthError(msg, isReg=false) {
+  const el = document.getElementById(isReg ? 'auth-error-reg' : 'auth-error');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+function setAuthLoading(loading, isReg=false) {
+  const btn = document.getElementById(isReg ? 'btn-register' : 'btn-login');
+  btn.disabled = loading;
+  btn.style.opacity = loading ? '.6' : '1';
+}
+
+// ============================================================
+// LOGIN
+// ============================================================
+async function handleLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-password').value;
+  if (!email || !pass) { showAuthError('Email এবং Password দিন'); return; }
+  setAuthLoading(true);
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  setAuthLoading(false);
+  if (error) { showAuthError(error.message); return; }
+  onLoginSuccess(data.user);
+}
+
+// ============================================================
+// REGISTER
+// ============================================================
+async function handleRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-password').value;
+  const farm = document.getElementById('reg-farm').value.trim() || 'Khamar Khata';
+  if (!name || !email || !pass) { showAuthError('সব তথ্য পূরণ করুন', true); return; }
+  if (pass.length < 6) { showAuthError('Password কমপক্ষে ৬ অক্ষর হতে হবে', true); return; }
+  setAuthLoading(true, true);
+  const { data, error } = await sb.auth.signUp({
+    email, password: pass,
+    options: { data: { full_name: name, farm_name: farm } }
+  });
+  setAuthLoading(false, true);
+  if (error) { showAuthError(error.message, true); return; }
+  // Seed default categories for new user
+  if (data.user) {
+    await sb.from('categories').insert(
+      ['feed','medicine','salary','transport','other'].map(name => ({ user_id: data.user.id, name }))
+    );
+  }
+  // If session exists directly (email confirm disabled), login immediately
+  if (data.session) {
+    await onLoginSuccess(data.user);
+  } else {
+    const emailSpan = email;
+    document.getElementById('form-register').innerHTML = `
+      <div style="text-align:center;padding:1rem 0;">
+        <div style="font-size:3rem;margin-bottom:.75rem;">📧</div>
+        <h3 style="font-family:'Manrope',sans-serif;font-weight:800;color:#206223;margin-bottom:.5rem;">Email Confirm করুন!</h3>
+        <p style="font-size:.875rem;color:#40493d;line-height:1.6;"><strong>${emailSpan}</strong> এ একটি confirmation link পাঠানো হয়েছে।<br/>Email verify করে Login করুন।</p>
+        <button onclick="switchTab('login')" class="btn-primary" style="margin-top:1.25rem;width:100%;justify-content:center;">Login করুন →</button>
+      </div>`;
+    document.getElementById('login-email').value = emailSpan;
+  }
+}
+
+// ============================================================
+// LOGOUT
+// ============================================================
+async function handleLogout() {
+  if (!confirm('Logout করবেন?')) return;
+  await sb.auth.signOut();
+  currentUser = null;
+  document.getElementById('app-screen').classList.add('hidden');
+  document.getElementById('auth-screen').classList.remove('hidden');
+  toast('👋 Logged out');
+}
+
+// ============================================================
+// ON LOGIN SUCCESS — load data from Supabase into localStorage-style DB
+// ============================================================
+async function onLoginSuccess(user) {
+  currentUser = user;
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('app-screen').classList.remove('hidden');
+
+  // Update sidebar user info
+  const meta = user.user_metadata || {};
+  document.getElementById('sidebar-user-email').textContent = user.email;
+  document.getElementById('sidebar-farm-name').textContent = meta.farm_name || 'Khamar Khata';
+
+  // Pull all data from Supabase into local DB cache
+  await syncFromSupabase();
+
+  // Boot app
+  seedIfEmpty();
+  const expDate = document.getElementById('exp-date');
+  if (expDate) expDate.value = today();
+  syncCategoryDropdown();
+  renderDashboard();
+  renderOwnerCheckboxes();
+}
+
+// ============================================================
+// SYNC: Pull Supabase → local DB
+// ============================================================
+async function syncFromSupabase() {
+  if (!currentUser) return;
+  const uid = currentUser.id;
+
+  const [
+    { data: owners },
+    { data: goats },
+    { data: cats },
+    { data: expenses },
+    { data: sales },
+    { data: ledger },
+    { data: notes },
+    { data: activities }
+  ] = await Promise.all([
+    sb.from('owners').select('*').eq('user_id', uid).order('created_at'),
+    sb.from('goats').select('*').eq('user_id', uid).order('created_at'),
+    sb.from('categories').select('*').eq('user_id', uid).order('created_at'),
+    sb.from('expenses').select('*').eq('user_id', uid).order('created_at'),
+    sb.from('sales').select('*').eq('user_id', uid).order('created_at'),
+    sb.from('ledger').select('*').eq('user_id', uid).order('created_at'),
+    sb.from('notes').select('*').eq('user_id', uid).order('created_at'),
+    sb.from('activities').select('*').eq('user_id', uid).order('created_at'),
+  ]);
+
+  // Map Supabase rows → local format
+  DB.set('owners', (owners||[]).map(o => ({ id: o.id, name: o.name, role: o.role||'', share: o.share||0, phone: o.phone||'', createdAt: new Date(o.created_at).getTime() })));
+  DB.set('goats', (goats||[]).map(g => ({ id: g.id, name: g.name, gender: g.gender, acquisition: g.acquisition||'purchased', price: g.price||0, date: g.date||'', breed: g.breed||'', notes: g.notes||'', status: g.status||'active', createdAt: new Date(g.created_at).getTime() })));
+  DB.set('categories', (cats||[]).map(c => c.name));
+  DB.set('expenses', (expenses||[]).map(e => ({ id: e.id, amount: e.amount, date: e.date, category: e.category, method: e.method||'', note: e.note||'', type: e.type, goatIds: e.goat_ids||[], goatId: e.goat_id||'', paidBy: e.paid_by||[], createdAt: new Date(e.created_at).getTime() })));
+  DB.set('sales', (sales||[]).map(s => ({ id: s.id, goatId: s.goat_id||'', goatName: s.goat_name||'', price: s.price, date: s.date, buyer: s.buyer||'', createdAt: new Date(s.created_at).getTime() })));
+  DB.set('ledger', (ledger||[]).map(l => ({ id: l.id, type: l.type, ownerId: l.owner_id||'', amount: l.amount, date: l.date||'', note: l.note||'', createdAt: new Date(l.created_at).getTime() })));
+  DB.set('notes', (notes||[]).map(n => ({ id: n.id, content: n.content, type: n.type, goatId: n.goat_id||null, createdAt: new Date(n.created_at).getTime() })));
+  DB.set('activities', (activities||[]).map(a => ({ id: a.id, type: a.type, label: a.label, amount: a.amount||0, txType: a.tx_type||'debit', createdAt: new Date(a.created_at).getTime() })));
+}
+
+// ============================================================
+// SUPABASE WRITE HELPERS — called from existing save functions
+// ============================================================
+
+// Patch saveGoat to also write to Supabase
+const _origSaveGoat = window.saveGoat;
+async function sbWriteGoat(goat) {
+  if (!currentUser) return;
+  await sb.from('goats').upsert({
+    id: goat.id, user_id: currentUser.id,
+    name: goat.name, gender: goat.gender, acquisition: goat.acquisition,
+    price: goat.price, date: goat.date || null, breed: goat.breed, notes: goat.notes,
+    status: goat.status, created_at: new Date(goat.createdAt).toISOString()
+  });
+}
+
+// Patch saveOwner to also write to Supabase
+async function sbWriteOwner(owner) {
+  if (!currentUser) return;
+  await sb.from('owners').upsert({
+    id: owner.id, user_id: currentUser.id,
+    name: owner.name, role: owner.role, share: owner.share, phone: owner.phone,
+    created_at: new Date(owner.createdAt || Date.now()).toISOString()
+  });
+}
+
+// Patch saveExpense to also write to Supabase
+async function sbWriteExpense(exp) {
+  if (!currentUser) return;
+  await sb.from('expenses').upsert({
+    id: exp.id, user_id: currentUser.id,
+    amount: exp.amount, date: exp.date, category: exp.category,
+    method: exp.method, note: exp.note, type: exp.type,
+    goat_ids: exp.goatIds || [], goat_id: exp.goatId || null,
+    paid_by: exp.paidBy || [], created_at: new Date(exp.createdAt).toISOString()
+  });
+}
+
+// Patch saveSale to also write to Supabase
+async function sbWriteSale(sale) {
+  if (!currentUser) return;
+  await sb.from('sales').upsert({
+    id: sale.id, user_id: currentUser.id,
+    goat_id: sale.goatId || null, goat_name: sale.goatName,
+    price: sale.price, date: sale.date, buyer: sale.buyer,
+    created_at: new Date(sale.createdAt).toISOString()
+  });
+}
+
+// Patch saveNote to also write to Supabase
+async function sbWriteNote(note) {
+  if (!currentUser) return;
+  await sb.from('notes').upsert({
+    id: note.id, user_id: currentUser.id,
+    content: note.content, type: note.type,
+    goat_id: note.goatId || null, created_at: new Date(note.createdAt).toISOString()
+  });
+}
+
+// Supabase delete helpers
+async function sbDelete(table, id) {
+  if (!currentUser) return;
+  await sb.from(table).delete().eq('id', id).eq('user_id', currentUser.id);
+}
+
+// ============================================================
+// MONKEY-PATCH existing save/delete functions → add Supabase sync
+// ============================================================
+
+// saveGoat
+const _origSaveGoatFn = saveGoat;
+window.saveGoat = async function() {
+  const namePre = document.getElementById('goat-id').value.trim();
+  if (!namePre) { toast('❌ Goat ID/Name দিন'); return; }
+  _origSaveGoatFn();
+  // Write latest goat to Supabase
+  const goats = DB.get('goats');
+  const latest = goats[goats.length - 1];
+  if (latest) await sbWriteGoat(latest);
+};
+
+// updateGoat
+const _origUpdateGoat = updateGoat;
+window.updateGoat = async function() {
+  _origUpdateGoat();
+  const id = document.getElementById('edit-goat-id').value;
+  const g = DB.get('goats').find(x => x.id === id);
+  if (g) await sbWriteGoat(g);
+};
+
+// deleteGoat
+const _origDeleteGoat = deleteGoat;
+window.deleteGoat = async function(id) {
+  _origDeleteGoat(id);
+  await sbDelete('goats', id);
+};
+
+// saveOwner
+const _origSaveOwner = saveOwner;
+window.saveOwner = async function() {
+  _origSaveOwner();
+  const owners = DB.get('owners');
+  const latest = owners[owners.length - 1];
+  if (latest) await sbWriteOwner(latest);
+};
+
+// updateOwner
+const _origUpdateOwner = updateOwner;
+window.updateOwner = async function() {
+  _origUpdateOwner();
+  const id = document.getElementById('edit-owner-id').value;
+  const o = DB.get('owners').find(x => x.id === id);
+  if (o) await sbWriteOwner(o);
+};
+
+// deleteOwner
+const _origDeleteOwner = deleteOwner;
+window.deleteOwner = async function(id) {
+  _origDeleteOwner(id);
+  await sbDelete('owners', id);
+};
+
+// saveExpense
+const _origSaveExpense = saveExpense;
+window.saveExpense = async function() {
+  _origSaveExpense();
+  const exps = DB.get('expenses');
+  const latest = exps[exps.length - 1];
+  if (latest) await sbWriteExpense(latest);
+};
+
+// deleteExpense
+const _origDeleteExpense = deleteExpense;
+window.deleteExpense = async function(id) {
+  _origDeleteExpense(id);
+  await sbDelete('expenses', id);
+};
+
+// saveSale
+const _origSaveSale = saveSale;
+window.saveSale = async function() {
+  _origSaveSale();
+  const sales = DB.get('sales');
+  const latest = sales[sales.length - 1];
+  if (latest) await sbWriteSale(latest);
+  // Update goat status in Supabase
+  const goatSel = document.getElementById('sale-goat');
+  if (goatSel?.value && currentUser) {
+    await sb.from('goats').update({ status: 'sold' }).eq('id', goatSel.value).eq('user_id', currentUser.id);
+  }
+};
+
+// saveNote
+const _origSaveNote = saveNote;
+window.saveNote = async function() {
+  _origSaveNote();
+  const notes = DB.get('notes');
+  const latest = notes[notes.length - 1];
+  if (latest) await sbWriteNote(latest);
+};
+
+// deleteNote
+const _origDeleteNote = deleteNote;
+window.deleteNote = async function(id) {
+  _origDeleteNote(id);
+  await sbDelete('notes', id);
+};
+
+// addCategory
+const _origAddCategory = addCategory;
+window.addCategory = async function() {
+  _origAddCategory();
+  const val = document.getElementById('new-category-input').value.trim().toLowerCase();
+  if (currentUser && val) {
+    await sb.from('categories').upsert({ user_id: currentUser.id, name: val }, { onConflict: 'user_id,name' });
+  }
+};
+
+// deleteCategory
+const _origDeleteCategory = deleteCategory;
+window.deleteCategory = async function(cat) {
+  _origDeleteCategory(cat);
+  if (currentUser) {
+    await sb.from('categories').delete().eq('user_id', currentUser.id).eq('name', cat);
+  }
+};
+
+// recordPayment → write ledger to Supabase
+const _origRecordPayment = recordPayment;
+window.recordPayment = async function() {
+  _origRecordPayment();
+  if (!currentUser) return;
+  const ledger = DB.get('ledger');
+  const latest = ledger[ledger.length - 1];
+  if (latest) {
+    await sb.from('ledger').upsert({
+      id: latest.id, user_id: currentUser.id,
+      type: latest.type, owner_id: latest.ownerId || null,
+      amount: latest.amount, date: latest.date || null, note: latest.note,
+      created_at: new Date(latest.createdAt).toISOString()
+    });
+  }
+};
+
+// clearAllData → also clear Supabase
+const _origClearAllData = clearAllData;
+window.clearAllData = async function() {
+  if (!confirm('সব data মুছে ফেলবেন? Supabase থেকেও মুছবে!')) return;
+  if (!currentUser) return;
+  const uid = currentUser.id;
+  await Promise.all([
+    sb.from('goats').delete().eq('user_id', uid),
+    sb.from('expenses').delete().eq('user_id', uid),
+    sb.from('sales').delete().eq('user_id', uid),
+    sb.from('ledger').delete().eq('user_id', uid),
+    sb.from('notes').delete().eq('user_id', uid),
+    sb.from('activities').delete().eq('user_id', uid),
+  ]);
+  ['goats','expenses','owners','sales','notes','ledger','categories','activities'].forEach(k => localStorage.removeItem('kk_' + k));
+  seedIfEmpty();
+  toast('🗑️ All data cleared');
+  navigate('dashboard');
+};
+
+// ============================================================
+// SESSION CHECK ON LOAD
+// ============================================================
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    await onLoginSuccess(session.user);
+  }
+  // Listen for auth changes
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session?.user) {
+      await onLoginSuccess(session.user);
+    }
+  });
+})();
+</script>
+</body>
+</html>
