@@ -1180,6 +1180,7 @@ function refreshView(view) {
   if (view === 'reports') renderReports();
   if (view === 'notes') renderNotes(), renderNoteGoatDropdown();
   if (view === 'settings') renderSettings();
+  // goat-profile and owner-profile are rendered on demand via viewGoatProfile/viewOwnerProfile
 }
 
 // ============================================================
@@ -1839,8 +1840,8 @@ function renderExpenseSummary() {
   }
 }
 
-function catColor(c) { const map={feed:'#206223',medicine:'#884200',salary:'#7a5649',transport:'#1565c0',other:'#6d4c41'}; return map[c]||'#706d6d'; }
-function catIcon(c) { const map={feed:'🌾',medicine:'💊',salary:'💵',transport:'🚗',other:'📋'}; return map[c]||'💰'; }
+function catColor(c) { const map={feed:'#206223',medicine:'#884200',salary:'#7a5649',transport:'#1565c0',other:'#6d4c41',doctor:'#1565c0',breeding:'#7b1fa2'}; return map[c]||'#706d6d'; }
+function catIcon(c) { const map={feed:'🌾',medicine:'💊',salary:'💵',transport:'🚗',other:'📋',doctor:'🩺',breeding:'🐑'}; return map[c]||'💰'; }
 
 // ============================================================
 // OWNER MANAGEMENT
@@ -2202,6 +2203,7 @@ function renderSettingsOwners() {
       <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-sm" style="background:#206223">${o.name.charAt(0)}</div>
       <div class="flex-1"><p class="font-bold text-sm">${o.name}</p><p class="text-xs text-gray-400">${o.role||''} · ${o.share}%</p></div>
       <div class="flex gap-2">
+        <button class="btn-ghost text-xs px-2 py-1" onclick="viewOwnerProfile('${o.id}')">Profile</button>
         <button class="btn-secondary text-xs px-2 py-1" onclick="openEditOwner('${o.id}')">Edit</button>
         <button class="btn-danger" onclick="deleteOwner('${o.id}')">Del</button>
       </div>
@@ -2358,6 +2360,8 @@ async function restoreData(event) {
         const uid_val = currentUser.id;
         // Clear existing data first
         await Promise.all([
+          sb.from('health_records').delete().eq('user_id',uid_val),
+          sb.from('due_clearances').delete().eq('user_id',uid_val),
           sb.from('goats').delete().eq('user_id',uid_val),
           sb.from('expenses').delete().eq('user_id',uid_val),
           sb.from('owners').delete().eq('user_id',uid_val),
@@ -2374,6 +2378,8 @@ async function restoreData(event) {
         if(data.notes?.length) await sb.from('notes').insert(data.notes.map(n=>({id:n.id,user_id:uid_val,content:n.content,type:n.type||'general',goat_id:n.goatId||null})));
         if(data.ledger?.length) await sb.from('ledger').insert(data.ledger.map(l=>({id:l.id,user_id:uid_val,type:l.type,owner_id:l.ownerId||null,amount:l.amount,date:l.date||null,note:l.note||''})));
         if(data.categories?.length) await sb.from('categories').insert(data.categories.map(name=>({user_id:uid_val,name})));
+        if(data.health_records?.length) await sb.from('health_records').insert(data.health_records.map(h=>({id:h.id,user_id:uid_val,goat_id:h.goatId||h.goat_id||'',type:h.type||'other',date:h.date,title:h.title||'',note:h.note||'',cost:h.cost||0,auto_expense_id:h.auto_expense_id||null})));
+        if(data.due_clearances?.length) await sb.from('due_clearances').insert(data.due_clearances.map(c=>({id:c.id,user_id:uid_val,owner_id:c.ownerId||c.owner_id||'',expense_id:c.expenseId||c.expense_id||'general',amount:c.amount||0,date:c.date,note:c.note||''})));
       }
       toast('✅ Data restored & synced to cloud!');
       navigate('dashboard');
@@ -2384,10 +2390,12 @@ async function restoreData(event) {
 }
 async function clearAllData() {
   if(!confirm('সব data মুছে ফেলবেন? এটা undo করা যাবে না!')) return;
-  ['goats','expenses','owners','sales','notes','ledger','categories','activities'].forEach(k=>localStorage.removeItem('kk_'+k));
+  ['goats','expenses','owners','sales','notes','ledger','categories','activities','health_records','due_clearances'].forEach(k=>localStorage.removeItem('kk_'+k));
   if(currentUser){
     const uid_val=currentUser.id;
     await Promise.all([
+      sb.from('health_records').delete().eq('user_id',uid_val),
+      sb.from('due_clearances').delete().eq('user_id',uid_val),
       sb.from('goats').delete().eq('user_id',uid_val),
       sb.from('expenses').delete().eq('user_id',uid_val),
       sb.from('owners').delete().eq('user_id',uid_val),
@@ -2473,7 +2481,7 @@ async function handleLogout() {
   await sb.auth.signOut();
   currentUser=null;
   // Clear localStorage
-  ['goats','expenses','owners','sales','notes','ledger','categories','activities'].forEach(k=>localStorage.removeItem('kk_'+k));
+  ['goats','expenses','owners','sales','notes','ledger','categories','activities','health_records','due_clearances'].forEach(k=>localStorage.removeItem('kk_'+k));
   document.getElementById('app-screen').classList.add('hidden');
   document.getElementById('auth-screen').classList.remove('hidden');
   toast('👋 Logged out');
