@@ -567,7 +567,8 @@ select.input-field{appearance:none;background-image:url("data:image/svg+xml,%3Cs
           </div>
           <div class="mb-3">
             <label class="label">Paid By (Owners)</label>
-            <div id="owner-checkbox-list" class="checkbox-group flex flex-wrap gap-2"></div>
+            <div id="owner-checkbox-list" class="space-y-2"></div>
+            <p id="contrib-validation-msg" class="text-xs mt-2 hidden" style="color:#ba1a1a"></p>
           </div>
           <div class="mb-4">
             <label class="label">Note</label>
@@ -905,7 +906,7 @@ select.input-field{appearance:none;background-image:url("data:image/svg+xml,%3Cs
         </div>
         <div>
           <label class="label">Acquisition Type</label>
-          <select class="input-field" id="goat-acquisition">
+          <select class="input-field" id="goat-acquisition" onchange="onGoatAcquisitionChange()">
             <option value="purchased">Purchased</option>
             <option value="born">Born on Farm</option>
             <option value="gifted">Gifted</option>
@@ -913,7 +914,7 @@ select.input-field{appearance:none;background-image:url("data:image/svg+xml,%3Cs
         </div>
       </div>
       <div class="grid grid-cols-2 gap-4">
-        <div><label class="label">Purchase Price (৳)</label><input type="number" class="input-field" id="goat-price" placeholder="0.00" min="0"/></div>
+        <div><label class="label">Purchase Price (৳)</label><input type="number" class="input-field" id="goat-price" placeholder="0.00" min="0" oninput="validateGoatContribTotal()"/></div>
         <div><label class="label">Entry Date</label><input type="date" class="input-field" id="goat-date"/></div>
       </div>
       <div>
@@ -924,7 +925,12 @@ select.input-field{appearance:none;background-image:url("data:image/svg+xml,%3Cs
         <label class="label">Notes</label>
         <textarea class="input-field" id="goat-notes" rows="2" placeholder="Any initial notes..."></textarea>
       </div>
-    </div>
+      <!-- Owner contribution for goat purchase -->
+      <div id="goat-owner-contrib-section" style="display:none">
+        <label class="label">Paid By (Owners) — Optional</label>
+        <div id="goat-owner-contrib-list" class="space-y-2"></div>
+        <p id="goat-contrib-validation-msg" class="text-xs mt-2 hidden" style="color:#ba1a1a"></p>
+      </div>
     <div class="flex gap-3 mt-6">
       <button class="btn-ghost flex-1" onclick="closeModal('modal-add-goat')">Cancel</button>
       <button class="btn-primary flex-1 justify-center" onclick="saveGoat()">
@@ -1215,7 +1221,11 @@ function refreshView(view) {
 // ============================================================
 function openModal(id) {
   document.getElementById(id).classList.add('open');
-  if (id === 'modal-add-goat') { document.getElementById('goat-date').value = today(); }
+  if (id === 'modal-add-goat') {
+    document.getElementById('goat-date').value = today();
+    renderGoatOwnerContribs();
+    onGoatAcquisitionChange();
+  }
 }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(m => {
@@ -1233,35 +1243,134 @@ function toast(msg, dur = 2500) {
 }
 
 // ============================================================
+// GOAT CONTRIBUTION HELPERS
+// ============================================================
+function renderGoatOwnerContribs() {
+  const owners = DB.get('owners');
+  const list = document.getElementById('goat-owner-contrib-list');
+  if (!list) return;
+  if (!owners.length) { list.innerHTML = '<p class="text-sm text-gray-400">Add owners first</p>'; return; }
+  list.innerHTML = owners.map(o => `
+    <div class="flex items-center gap-3 p-2.5 rounded-xl border-2 border-transparent transition-all" id="gcrow-${o.id}" style="background:#f3f3f3">
+      <label class="flex items-center gap-2 flex-1 cursor-pointer min-w-0">
+        <input type="checkbox" name="goat-owner" value="${o.id}"
+          onchange="onGoatOwnerContribToggle('${o.id}')"
+          style="width:16px;height:16px;accent-color:#206223;flex-shrink:0"/>
+        <span class="font-medium text-sm truncate">${o.name}</span>
+        <span class="text-xs text-gray-400 flex-shrink-0">${o.share}%</span>
+      </label>
+      <div id="gcamt-${o.id}" style="display:none">
+        <input type="number" class="input-field text-sm" id="gcval-${o.id}"
+          placeholder="Amount" min="0" style="width:110px;padding:0.4rem 0.6rem"
+          oninput="validateGoatContribTotal()"/>
+      </div>
+    </div>
+  `).join('');
+}
+
+function onGoatAcquisitionChange() {
+  const acq = document.getElementById('goat-acquisition')?.value;
+  const section = document.getElementById('goat-owner-contrib-section');
+  if (section) section.style.display = acq === 'purchased' ? 'block' : 'none';
+}
+
+function onGoatOwnerContribToggle(ownerId) {
+  const cb = document.querySelector(`input[name="goat-owner"][value="${ownerId}"]`);
+  const row = document.getElementById(`gcrow-${ownerId}`);
+  const amtDiv = document.getElementById(`gcamt-${ownerId}`);
+  const amtInput = document.getElementById(`gcval-${ownerId}`);
+  if (cb?.checked) {
+    amtDiv.style.display = 'block';
+    row.style.borderColor = '#206223';
+    row.style.background = '#f0fdf0';
+    amtInput.focus();
+  } else {
+    amtDiv.style.display = 'none';
+    amtInput.value = '';
+    row.style.borderColor = 'transparent';
+    row.style.background = '#f3f3f3';
+  }
+  validateGoatContribTotal();
+}
+
+function validateGoatContribTotal() {
+  const price = parseFloat(document.getElementById('goat-price')?.value) || 0;
+  const checked = [...document.querySelectorAll('input[name="goat-owner"]:checked')];
+  const msg = document.getElementById('goat-contrib-validation-msg');
+  if (!checked.length || !price) { if (msg) msg.classList.add('hidden'); return true; }
+  const enteredAmounts = checked.map(cb => parseFloat(document.getElementById(`gcval-${cb.value}`)?.value) || 0);
+  const hasAny = enteredAmounts.some(a => a > 0);
+  if (!hasAny) { if (msg) msg.classList.add('hidden'); return true; }
+  const sum = enteredAmounts.reduce((s, a) => s + a, 0);
+  if (Math.abs(sum - price) > 0.01) {
+    if (msg) { msg.textContent = `⚠️ মোট পরিমাণ মিলছে না: ${fmt(sum)} ≠ ${fmt(price)}`; msg.classList.remove('hidden'); }
+    return false;
+  }
+  if (msg) msg.classList.add('hidden');
+  return true;
+}
+
+// ============================================================
 // GOAT MANAGEMENT
 // ============================================================
 async function saveGoat() {
   const name = document.getElementById('goat-id').value.trim();
   if (!name) { toast('❌ Goat ID/Name দিন'); return; }
+  const acquisition = document.getElementById('goat-acquisition').value;
+  const price = parseFloat(document.getElementById('goat-price').value) || 0;
+
+  // Validate goat purchase contributions if any entered
+  if (acquisition === 'purchased' && price > 0) {
+    if (!validateGoatContribTotal()) { toast('❌ মোট পরিমাণ মিলছে না, ঠিক করুন'); return; }
+  }
+
   const goat = {
     id: uid(), name,
     gender: document.getElementById('goat-gender').value,
-    acquisition: document.getElementById('goat-acquisition').value,
-    price: parseFloat(document.getElementById('goat-price').value) || 0,
+    acquisition,
+    price,
     date: document.getElementById('goat-date').value || today(),
     breed: document.getElementById('goat-breed').value.trim(),
     notes: document.getElementById('goat-notes').value.trim(),
     status: 'active', createdAt: Date.now()
   };
-  // Save to localStorage
   const goats = DB.get('goats');
   goats.push(goat);
   DB.set('goats', goats);
-  // Save to Supabase
   await sbUpsert('goats', {
     id: goat.id, name: goat.name, gender: goat.gender, acquisition: goat.acquisition,
     price: goat.price, date: goat.date || null, breed: goat.breed, notes: goat.notes, status: goat.status
   });
-  // Use goat entry date for activity timestamp (Phase 1 date fix)
+
+  // Save goat purchase contributions if owners selected
+  const paidOwners = [...document.querySelectorAll('input[name="goat-owner"]:checked')].map(c => c.value);
+  if (paidOwners.length && price > 0 && acquisition === 'purchased') {
+    const manualContribs = {};
+    let hasManual = false;
+    paidOwners.forEach(oid => {
+      const val = parseFloat(document.getElementById(`gcval-${oid}`)?.value) || 0;
+      if (val > 0) { manualContribs[oid] = val; hasManual = true; }
+    });
+    const contributions = paidOwners.map(oid => ({
+      id: uid(),
+      user_id: currentUser?.id,
+      goat_id: goat.id,
+      owner_id: oid,
+      amount_paid: hasManual ? (manualContribs[oid] || 0) : price / paidOwners.length
+    })).filter(c => c.amount_paid > 0);
+    if (contributions.length && currentUser) {
+      await sb.from('goat_purchase_contributions').insert(contributions);
+    }
+  }
+
   const goatDateTs = goat.date ? new Date(goat.date).getTime() : Date.now();
   addActivity('goat_added', `New goat added: ${goat.name}`, goat.price, 'debit', goatDateTs);
   closeModal('modal-add-goat');
   ['goat-id','goat-price','goat-breed','goat-notes'].forEach(id => document.getElementById(id).value = '');
+  // Reset goat owner checkboxes
+  document.querySelectorAll('input[name="goat-owner"]:checked').forEach(c => {
+    c.checked = false; onGoatOwnerContribToggle(c.value);
+  });
   toast('✅ Goat added!');
   renderGoats();
 }
@@ -1752,9 +1861,66 @@ function renderSingleGoatDropdown() {
 
 function renderOwnerCheckboxes() {
   const owners = DB.get('owners');
+  if (!owners.length) {
+    document.getElementById('owner-checkbox-list').innerHTML = '<p class="text-sm text-gray-400">Add owners first</p>';
+    return;
+  }
   document.getElementById('owner-checkbox-list').innerHTML = owners.map(o => `
-    <label><input type="checkbox" name="exp-owner" value="${o.id}"/><span>${o.name}</span></label>
-  `).join('') || '<p class="text-sm text-gray-400">Add owners first</p>';
+    <div class="flex items-center gap-3 p-2.5 rounded-xl border-2 border-transparent transition-all" id="ocrow-${o.id}" style="background:#f3f3f3">
+      <label class="flex items-center gap-2 flex-1 cursor-pointer min-w-0">
+        <input type="checkbox" name="exp-owner" value="${o.id}"
+          onchange="onOwnerContribToggle('${o.id}')"
+          style="width:16px;height:16px;accent-color:#206223;flex-shrink:0"/>
+        <span class="font-medium text-sm truncate">${o.name}</span>
+        <span class="text-xs text-gray-400 flex-shrink-0">${o.share}%</span>
+      </label>
+      <div id="ocamt-${o.id}" style="display:none">
+        <input type="number" class="input-field text-sm" id="ocval-${o.id}"
+          placeholder="Amount" min="0" style="width:110px;padding:0.4rem 0.6rem"
+          oninput="validateContribTotal()"/>
+      </div>
+    </div>
+  `).join('');
+}
+
+function onOwnerContribToggle(ownerId) {
+  const cb = document.querySelector(`input[name="exp-owner"][value="${ownerId}"]`);
+  const row = document.getElementById(`ocrow-${ownerId}`);
+  const amtDiv = document.getElementById(`ocamt-${ownerId}`);
+  const amtInput = document.getElementById(`ocval-${ownerId}`);
+  if (cb?.checked) {
+    amtDiv.style.display = 'block';
+    row.style.borderColor = '#206223';
+    row.style.background = '#f0fdf0';
+    amtInput.focus();
+  } else {
+    amtDiv.style.display = 'none';
+    amtInput.value = '';
+    row.style.borderColor = 'transparent';
+    row.style.background = '#f3f3f3';
+  }
+  validateContribTotal();
+}
+
+function validateContribTotal() {
+  const amount = parseFloat(document.getElementById('exp-amount')?.value) || 0;
+  const checked = [...document.querySelectorAll('input[name="exp-owner"]:checked')];
+  if (!checked.length || !amount) {
+    const msg = document.getElementById('contrib-validation-msg');
+    if (msg) msg.classList.add('hidden');
+    return true;
+  }
+  const enteredAmounts = checked.map(cb => parseFloat(document.getElementById(`ocval-${cb.value}`)?.value) || 0);
+  const hasAnyManual = enteredAmounts.some(a => a > 0);
+  if (!hasAnyManual) return true; // fallback to auto-split
+  const sum = enteredAmounts.reduce((s, a) => s + a, 0);
+  const msg = document.getElementById('contrib-validation-msg');
+  if (Math.abs(sum - amount) > 0.01) {
+    if (msg) { msg.textContent = `⚠️ মোট পরিমাণ মিলছে না: ${fmt(sum)} ≠ ${fmt(amount)}`; msg.classList.remove('hidden'); }
+    return false;
+  }
+  if (msg) msg.classList.add('hidden');
+  return true;
 }
 
 async function saveExpense() {
@@ -1778,32 +1944,62 @@ async function saveExpense() {
   }
   const paidBy = [...document.querySelectorAll('input[name="exp-owner"]:checked')].map(c => c.value);
 
+  // Collect manual contribution amounts
+  const manualContribs = {};
+  let hasManual = false;
+  paidBy.forEach(oid => {
+    const val = parseFloat(document.getElementById(`ocval-${oid}`)?.value) || 0;
+    if (val > 0) { manualContribs[oid] = val; hasManual = true; }
+  });
+
+  // Validate if manual amounts entered
+  if (hasManual) {
+    if (!validateContribTotal()) { toast('❌ মোট পরিমাণ মিলছে না, ঠিক করুন'); return; }
+  }
+
   const expense = { id: uid(), amount, date, category, method, note, type, goatIds, goatId, paidBy, createdAt: Date.now() };
-  // localStorage
   const expenses = DB.get('expenses');
   expenses.push(expense);
   DB.set('expenses', expenses);
-  // Supabase
+
   await sbUpsert('expenses', {
     id: expense.id, amount, date, category, method, note, type,
     goat_ids: goatIds, goat_id: goatId || null, paid_by: paidBy
   });
-  // Ledger entries
+
+  // Ledger entries — use manual amounts if provided, else auto-split
   if (paidBy.length) {
-    const perOwner = amount / paidBy.length;
     const ledger = DB.get('ledger');
+    const contributions = []; // for expense_contributions table
     for (const oid of paidBy) {
-      const entry = { id: uid(), type: 'expense', ownerId: oid, amount: perOwner, date, note: `Expense: ${category}`, createdAt: Date.now() };
+      const ownerAmount = hasManual
+        ? (manualContribs[oid] || 0)
+        : amount / paidBy.length;
+      if (ownerAmount <= 0) continue;
+      const entry = { id: uid(), type: 'expense', ownerId: oid, amount: ownerAmount, date, note: `Expense: ${category}`, createdAt: Date.now() };
       ledger.push(entry);
-      await sbUpsert('ledger', { id: entry.id, type: entry.type, owner_id: oid, amount: perOwner, date, note: entry.note });
+      await sbUpsert('ledger', { id: entry.id, type: entry.type, owner_id: oid, amount: ownerAmount, date, note: entry.note });
+      contributions.push({ id: uid(), expense_id: expense.id, owner_id: oid, amount_paid: ownerAmount });
     }
     DB.set('ledger', ledger);
+    // Save to expense_contributions table
+    if (contributions.length && currentUser) {
+      await sb.from('expense_contributions').insert(
+        contributions.map(c => ({ ...c, user_id: currentUser.id }))
+      );
+    }
   }
-  // Use expense date for activity timestamp (Phase 1 date fix)
+
   const expDateTs = date ? new Date(date).getTime() : Date.now();
   addActivity('expense', `Expense: ${category} (${type})`, amount, 'debit', expDateTs);
   ['exp-amount','exp-note','exp-method'].forEach(id => document.getElementById(id).value = '');
-  document.querySelectorAll('input[name="exp-goat"]:checked, input[name="exp-owner"]:checked').forEach(c => c.checked = false);
+  document.querySelectorAll('input[name="exp-owner"]:checked').forEach(c => {
+    c.checked = false;
+    onOwnerContribToggle(c.value);
+  });
+  document.querySelectorAll('input[name="exp-goat"]:checked').forEach(c => c.checked = false);
+  const vmsg = document.getElementById('contrib-validation-msg');
+  if (vmsg) vmsg.classList.add('hidden');
   toast('✅ Expense saved!');
   renderExpenses();
   renderExpenseSummary();
@@ -2458,15 +2654,29 @@ function renderSettingsOwners() {
   if(!el) return;
   el.innerHTML=owners.map(o=>`
     <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-      <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-sm" style="background:#206223">${o.name.charAt(0)}</div>
-      <div class="flex-1"><p class="font-bold text-sm">${o.name}</p><p class="text-xs text-gray-400">${o.role||''} · ${o.share}%</p></div>
-      <div class="flex gap-2">
-        <button class="btn-ghost text-xs px-2 py-1" onclick="viewOwnerProfile('${o.id}')">Profile</button>
-        <button class="btn-secondary text-xs px-2 py-1" onclick="openEditOwner('${o.id}')">Edit</button>
-        <button class="btn-danger" onclick="deleteOwner('${o.id}')">Del</button>
+      <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-sm flex-shrink-0" style="background:#206223">${o.name.charAt(0)}</div>
+      <div class="flex-1 min-w-0">
+        <p class="font-bold text-sm truncate">${o.name}</p>
+        <p class="text-xs text-gray-400">${o.role||''} · ${o.share}%</p>
+      </div>
+      <div class="flex gap-2 flex-shrink-0">
+        <button class="btn-ghost text-xs px-2 py-1" onclick="event.stopPropagation();viewOwnerProfile('${o.id}')">Profile</button>
+        <button class="btn-secondary text-xs px-2 py-1" onclick="event.stopPropagation();editOwnerFromSettings('${o.id}')">Edit</button>
+        <button class="btn-danger" onclick="event.stopPropagation();deleteOwner('${o.id}')">Del</button>
       </div>
     </div>
   `).join('')||'<p class="text-sm text-gray-400 py-3">কোনো মালিক নেই</p>';
+}
+
+function editOwnerFromSettings(id) {
+  const o = DB.get('owners').find(x => x.id === id);
+  if (!o) { toast('❌ Owner খুঁজে পাওয়া যায়নি'); return; }
+  document.getElementById('edit-owner-id').value = id;
+  document.getElementById('edit-owner-name').value = o.name;
+  document.getElementById('edit-owner-role').value = o.role || '';
+  document.getElementById('edit-owner-share').value = o.share;
+  document.getElementById('edit-owner-phone').value = o.phone || '';
+  document.getElementById('modal-edit-owner').classList.add('open');
 }
 async function addCategory() {
   const val=document.getElementById('new-category-input').value.trim().toLowerCase();
@@ -2622,7 +2832,7 @@ function addActivity(type,label,amount,txType,dateOverride) {
 // ============================================================
 function backupData() {
   const data={};
-  ['goats','expenses','owners','sales','notes','ledger','categories','activities','health_records','due_clearances'].forEach(k=>{data[k]=DB.get(k);});
+  ['goats','expenses','owners','sales','notes','ledger','categories','activities','health_records','due_clearances','expense_contributions','goat_purchase_contributions'].forEach(k=>{data[k]=DB.get(k);});
   data.exportedAt=new Date().toISOString();
   data.version='2.0';
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
@@ -2642,7 +2852,7 @@ async function restoreData(event) {
       const data=JSON.parse(e.target.result);
       if(!confirm('Restore করবেন? সব current data replace হয়ে যাবে।')) return;
       // Write to localStorage
-      ['goats','expenses','owners','sales','notes','ledger','categories','activities','health_records','due_clearances'].forEach(k=>{if(data[k]) DB.set(k,data[k]);});
+      ['goats','expenses','owners','sales','notes','ledger','categories','activities','health_records','due_clearances','expense_contributions','goat_purchase_contributions'].forEach(k=>{if(data[k]) DB.set(k,data[k]);});
       // Sync to Supabase
       if(currentUser) {
         toast('⏳ Syncing to cloud...');
@@ -2679,7 +2889,7 @@ async function restoreData(event) {
 }
 async function clearAllData() {
   if(!confirm('সব data মুছে ফেলবেন? এটা undo করা যাবে না!')) return;
-  ['goats','expenses','owners','sales','notes','ledger','categories','activities','health_records','due_clearances'].forEach(k=>localStorage.removeItem('kk_'+k));
+  ['goats','expenses','owners','sales','notes','ledger','categories','activities','health_records','due_clearances','expense_contributions','goat_purchase_contributions'].forEach(k=>localStorage.removeItem('kk_'+k));
   if(currentUser){
     const uid_val=currentUser.id;
     await Promise.all([
@@ -2770,7 +2980,7 @@ async function handleLogout() {
   await sb.auth.signOut();
   currentUser=null;
   // Clear localStorage
-  ['goats','expenses','owners','sales','notes','ledger','categories','activities','health_records','due_clearances'].forEach(k=>localStorage.removeItem('kk_'+k));
+  ['goats','expenses','owners','sales','notes','ledger','categories','activities','health_records','due_clearances','expense_contributions','goat_purchase_contributions'].forEach(k=>localStorage.removeItem('kk_'+k));
   document.getElementById('app-screen').classList.add('hidden');
   document.getElementById('auth-screen').classList.remove('hidden');
   toast('👋 Logged out');
@@ -2799,7 +3009,7 @@ async function syncFromSupabase() {
   const[
     {data:owners},{data:goats},{data:cats},{data:expenses},
     {data:sales},{data:ledger},{data:notes},{data:activities},
-    {data:healthRecs},{data:dueClear}
+    {data:healthRecs},{data:dueClear},{data:expContribs},{data:goatContribs}
   ]=await Promise.all([
     sb.from('owners').select('*').eq('user_id',uid_val).order('created_at'),
     sb.from('goats').select('*').eq('user_id',uid_val).order('created_at'),
@@ -2811,6 +3021,8 @@ async function syncFromSupabase() {
     sb.from('activities').select('*').eq('user_id',uid_val).order('created_at'),
     sb.from('health_records').select('*').eq('user_id',uid_val).order('created_at'),
     sb.from('due_clearances').select('*').eq('user_id',uid_val).order('created_at'),
+    sb.from('expense_contributions').select('*').eq('user_id',uid_val),
+    sb.from('goat_purchase_contributions').select('*').eq('user_id',uid_val),
   ]);
   DB.set('owners',(owners||[]).map(o=>({id:o.id,name:o.name,role:o.role||'',share:o.share||0,phone:o.phone||'',createdAt:new Date(o.created_at).getTime()})));
   DB.set('goats',(goats||[]).map(g=>({id:g.id,name:g.name,gender:g.gender,acquisition:g.acquisition||'purchased',price:g.price||0,date:g.date||'',breed:g.breed||'',notes:g.notes||'',status:g.status||'active',createdAt:new Date(g.created_at).getTime()})));
@@ -2820,13 +3032,15 @@ async function syncFromSupabase() {
   DB.set('ledger',(ledger||[]).map(l=>({id:l.id,type:l.type,ownerId:l.owner_id||'',amount:l.amount,date:l.date||'',note:l.note||'',createdAt:new Date(l.created_at).getTime()})));
   DB.set('notes',(notes||[]).map(n=>({id:n.id,content:n.content,type:n.type,goatId:n.goat_id||null,createdAt:new Date(n.created_at).getTime()})));
   DB.set('activities',(activities||[]).map(a=>{
-    // Use activity_date (the real event date) for display; fall back to created_at
     const dateStr = a.activity_date || a.created_at?.split('T')[0];
     const createdAt = dateStr ? new Date(dateStr).getTime() : Date.now();
     return {id:a.id,type:a.type,label:a.label,amount:a.amount||0,txType:a.tx_type||'debit',createdAt,actDate:dateStr||''};
   }));
   DB.set('health_records',(healthRecs||[]).map(h=>({id:h.id,goatId:h.goat_id||'',type:h.type,date:h.date||'',title:h.title||'',note:h.note||'',cost:h.cost||0,auto_expense_id:h.auto_expense_id||null,createdAt:new Date(h.created_at).getTime()})));
   DB.set('due_clearances',(dueClear||[]).map(c=>({id:c.id,ownerId:c.owner_id||'',expenseId:c.expense_id||'',amount:c.amount||0,date:c.date||'',note:c.note||'',createdAt:new Date(c.created_at).getTime()})));
+  // New contribution tables
+  DB.set('expense_contributions',(expContribs||[]).map(c=>({id:c.id,expenseId:c.expense_id,ownerId:c.owner_id,amountPaid:c.amount_paid||0})));
+  DB.set('goat_purchase_contributions',(goatContribs||[]).map(c=>({id:c.id,goatId:c.goat_id,ownerId:c.owner_id,amountPaid:c.amount_paid||0})));
 }
 
 // ============================================================
